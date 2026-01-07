@@ -236,7 +236,7 @@
             right: -25px; /* 調整位置在進度條末端 */
             top: -45px;   /* 站在進度條上方 */
             font-size: 3rem;
-            transform: scaleX(-1); /* 面向左邊 (因為時間減少是往左) */
+            /* transform: scaleX(-1);  <-- 移除這個翻轉，讓它面向預設的左邊 */
             filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));
             animation: dino-walk 0.6s ease-in-out infinite alternate;
             z-index: 5;
@@ -244,8 +244,9 @@
         }
 
         @keyframes dino-walk {
-            0% { transform: scaleX(-1) translateY(0) rotate(0deg); }
-            100% { transform: scaleX(-1) translateY(-5px) rotate(-5deg); }
+            /* 修正動畫 keyframes，不需要 scaleX(-1) */
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-5px) rotate(-5deg); }
         }
 
         @keyframes stripe-move {
@@ -574,7 +575,7 @@
         const allSchedules = {
             "high": { 
                 "day1": [
-                    { subject: "國語", start: "21:40", end: "22:20" },
+                    { subject: "國語", start: "08:40", end: "09:20" },
                     { subject: "自然", start: "09:30", end: "10:10" },
                     { subject: "英語", start: "10:30", end: "11:10" }
                 ],
