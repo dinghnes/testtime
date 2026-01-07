@@ -127,23 +127,17 @@
             cursor: pointer;
             user-select: none;
             filter: drop-shadow(0 8px 10px rgba(0,0,0,0.15));
-            /* 動畫由 JS class 控制 */
             transform-origin: center bottom;
         }
         
-        /* === 動畫定義區 === */
-
-        /* 1. 一般狀態：懸浮呼吸 (Float) */
+        /* === Boss Avatar Animations === */
         @keyframes float-breath {
             0% { transform: translateY(0px) scale(1); }
             50% { transform: translateY(-10px) scale(1.05); }
             100% { transform: translateY(0px) scale(1); }
         }
-        .anim-float {
-            animation: float-breath 3s ease-in-out infinite;
-        }
+        .anim-float { animation: float-breath 3s ease-in-out infinite; }
 
-        /* 2. 殘血狀態：急促發抖 (Nervous Shake) */
         @keyframes nervous-shake {
             0% { transform: translate(1px, 1px) rotate(0deg); }
             10% { transform: translate(-1px, -2px) rotate(-1deg); }
@@ -157,11 +151,8 @@
             90% { transform: translate(1px, 2px) rotate(0deg); }
             100% { transform: translate(1px, -2px) rotate(-1deg); }
         }
-        .anim-shake {
-            animation: nervous-shake 0.8s infinite;
-        }
+        .anim-shake { animation: nervous-shake 0.8s infinite; }
 
-        /* 3. 生氣狀態：劇烈震動 (Violent Angry) */
         @keyframes violent-shake {
             0% { transform: translate(0, 0) scale(1.2); }
             25% { transform: translate(-5px, 5px) scale(1.2); }
@@ -169,12 +160,8 @@
             75% { transform: translate(-5px, -5px) scale(1.2); }
             100% { transform: translate(0, 0) scale(1.2); }
         }
-        .anim-angry {
-            animation: violent-shake 0.1s infinite; /* 極快 */
-            filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.6)) !important; /* 加紅光 */
-        }
+        .anim-angry { animation: violent-shake 0.1s infinite; filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.6)) !important; }
 
-        /* 4. 哭泣狀態：彈跳 (Crying Bounce) */
         @keyframes sad-bounce {
             0%, 100% { transform: scale(1, 1) translateY(0); }
             10% { transform: scale(1.1, 0.9) translateY(0); }
@@ -184,14 +171,11 @@
             64% { transform: scale(1, 1) translateY(0); }
             100% { transform: scale(1, 1) translateY(0); }
         }
-        .anim-cry {
-            animation: sad-bounce 1.5s infinite;
-        }
+        .anim-cry { animation: sad-bounce 1.5s infinite; }
 
-        /* 點擊時的微小縮放效果 */
         .boss-avatar:active {
             transform: scale(0.8) !important;
-            animation: none !important; /* 點下去瞬間暫停動畫 */
+            animation: none !important;
         }
 
         .hp-container {
@@ -211,15 +195,18 @@
         .hp-text .boss-name { font-size: 2rem; }
         .hp-text .boss-timer { font-size: 1.8rem; font-family: 'Roboto Mono', monospace; color: var(--text-secondary); }
 
+        /* 進度條外框 - 修改為 visible 讓恐龍可以凸出來 */
         .hp-bar-frame {
             height: 40px;
             background-color: #dfe6e9;
             border-radius: 20px;
-            overflow: hidden;
             box-shadow: inset 0 2px 6px rgba(0,0,0,0.1);
             position: relative;
+            overflow: visible; /* 關鍵：讓恐龍不被切掉 */
+            margin-top: 20px; /* 增加上方空間給恐龍 */
         }
 
+        /* 進度條填充 - 加入圓角 */
         .hp-bar-fill {
             height: 100%;
             width: 100%;
@@ -227,6 +214,8 @@
             border-radius: 20px;
             transition: width 0.5s linear, background 0.5s;
             position: relative;
+            
+            /* 條紋背景 */
             background-image: linear-gradient(
                 45deg, 
                 rgba(255, 255, 255, 0.2) 25%, 
@@ -239,6 +228,24 @@
             );
             background-size: 40px 40px;
             animation: stripe-move 2s linear infinite;
+        }
+
+        /* 恐龍跑者 */
+        .dino-runner {
+            position: absolute;
+            right: -25px; /* 調整位置在進度條末端 */
+            top: -45px;   /* 站在進度條上方 */
+            font-size: 3rem;
+            transform: scaleX(-1); /* 面向左邊 (因為時間減少是往左) */
+            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));
+            animation: dino-walk 0.6s ease-in-out infinite alternate;
+            z-index: 5;
+            pointer-events: none; /* 不干擾點擊 */
+        }
+
+        @keyframes dino-walk {
+            0% { transform: scaleX(-1) translateY(0) rotate(0deg); }
+            100% { transform: scaleX(-1) translateY(-5px) rotate(-5deg); }
         }
 
         @keyframes stripe-move {
@@ -262,14 +269,12 @@
             position: relative;
         }
 
-        /* 預設靜態樣式 */
         #main-reminder {
             width: 100%;
             white-space: pre-wrap;
             line-height: 1.3;
         }
 
-        /* 跑馬燈啟動樣式 */
         .reminder-area.marquee-active #main-reminder {
             width: auto;
             white-space: nowrap;
@@ -406,7 +411,6 @@
             box-shadow: 0 0 0 4px rgba(9, 132, 227, 0.1);
         }
         
-        /* Checkbox 樣式 */
         .checkbox-wrapper {
             display: flex;
             align-items: center;
@@ -463,7 +467,6 @@
         <div class="message-section">
             <!-- Boss 血條 -->
             <div class="boss-battle-area">
-                <!-- 新增 onclick 事件來觸發彩蛋 -->
                 <div class="boss-avatar anim-float" id="boss-icon" onclick="bossClickReaction()">☕</div>
                 <div class="hp-container">
                     <div class="hp-text">
@@ -471,7 +474,10 @@
                         <span class="boss-timer" id="boss-timer">--:--</span>
                     </div>
                     <div class="hp-bar-frame">
-                        <div class="hp-bar-fill" id="hp-bar" style="width: 100%; background: #ccc;"></div>
+                        <div class="hp-bar-fill" id="hp-bar" style="width: 100%; background: #ccc;">
+                            <!-- 恐龍跑者：放在填充條內部，透過 CSS 定位在末端 -->
+                            <div class="dino-runner" id="dino-icon">🦖</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -533,7 +539,6 @@
             <label>📢 提醒大字</label>
             <textarea id="input-reminder" rows="2">準備考試&#10;請保持安靜</textarea>
             
-            <!-- 跑馬燈開關 -->
             <div class="checkbox-wrapper">
                 <input type="checkbox" id="input-reminder-marquee">
                 <label for="input-reminder-marquee">開啟跑馬燈模式 (單行捲動)</label>
@@ -604,10 +609,9 @@
 
         // --- 核心邏輯 ---
         
-        // 彩蛋變數
         let clickCount = 0;
         let lastClickTime = 0;
-        let reactionEndTime = 0; // 彩蛋持續結束時間
+        let reactionEndTime = 0;
 
         function updateTime() {
             const now = new Date();
@@ -619,22 +623,17 @@
             updateScheduleAndBoss(now);
         }
 
-        // 彩蛋點擊邏輯
         function bossClickReaction() {
             const now = Date.now();
-            // 如果點擊間隔太久(2秒)，重置計數
             if (now - lastClickTime > 2000) {
                 clickCount = 0;
             }
             lastClickTime = now;
             clickCount++;
 
-            // 觸發彩蛋
             if (clickCount >= 10) {
-                reactionEndTime = now + 5000; // 反應持續 5 秒
-                clickCount = 0; // 重置計數
-                
-                // 強制立即更新畫面
+                reactionEndTime = now + 5000;
+                clickCount = 0;
                 updateTime();
             }
         }
@@ -696,12 +695,18 @@
 
             if (!isExamining) {
                 document.getElementById('boss-icon').innerText = "☕"; 
-                document.getElementById('boss-icon').className = "boss-avatar anim-float"; // 預設浮動
+                document.getElementById('boss-icon').className = "boss-avatar anim-float";
                 document.getElementById('boss-name').innerText = "休息時間 / 準備下一科";
                 document.getElementById('boss-timer').innerText = "";
                 const bar = document.getElementById('hp-bar');
                 bar.style.width = "100%";
                 bar.style.background = "#b2bec3"; 
+                
+                // 休息時間隱藏恐龍
+                document.getElementById('dino-icon').style.display = 'none';
+            } else {
+                // 考試時間顯示恐龍
+                document.getElementById('dino-icon').style.display = 'block';
             }
         }
 
@@ -713,7 +718,7 @@
 
             // 預設圖示與狀態 class
             let iconText = "👾";
-            let animClass = "anim-float"; // 預設: 懸浮
+            let animClass = "anim-float"; 
             let colorVar = "";
 
             bossName.innerText = `BOSS：${subjectName}`;
@@ -727,31 +732,28 @@
 
             if (percentage > 50) {
                 colorVar = "var(--hp-high)"; 
-                animClass = "anim-float"; // 綠血: 懸浮
+                animClass = "anim-float"; 
             } else if (percentage > 20) {
                 colorVar = "var(--hp-mid)";
-                animClass = "anim-float"; // 黃血: 懸浮
+                animClass = "anim-float"; 
             } else {
                 colorVar = "var(--hp-low)";
-                iconText = "🥵"; // 預設殘血圖示
-                animClass = "anim-shake"; // 紅血: 發抖
+                iconText = "🥵"; 
+                animClass = "anim-shake"; 
             }
 
             // --- 彩蛋邏輯介入 ---
-            // 檢查是否處於彩蛋反應時間內
             if (Date.now() < reactionEndTime) {
                 if (iconText === "👾") {
-                    iconText = "😡"; // 一般狀態 -> 生氣
-                    animClass = "anim-angry"; // 生氣動畫
+                    iconText = "😡"; 
+                    animClass = "anim-angry"; 
                 } else if (iconText === "🥵") {
-                    iconText = "😭"; // 殘血狀態 -> 哭
-                    animClass = "anim-cry"; // 哭泣動畫
+                    iconText = "😭"; 
+                    animClass = "anim-cry"; 
                 }
             }
             
-            // 最後才設定圖示、顏色、動畫Class
             bossIcon.innerText = iconText;
-            // 加上基礎 class
             bossIcon.className = `boss-avatar ${animClass}`;
             hpBar.style.background = colorVar;
         }
@@ -762,7 +764,6 @@
         function closeSettings() { document.getElementById('settings-panel').style.display = 'none'; }
 
         function saveSettings() {
-            // 1. 取得數值
             const reminderText = document.getElementById('input-reminder').value;
             const marqueeEnabled = document.getElementById('input-reminder-marquee').checked;
             
@@ -770,34 +771,30 @@
             const actual = document.getElementById('input-actual').value;
             const absentList = document.getElementById('input-absent-list').value;
 
-            // 2. 更新畫面 UI - 提醒大字
             const reminderContainer = document.getElementById('reminder-container');
             const mainReminder = document.getElementById('main-reminder');
 
             if (marqueeEnabled) {
                 reminderContainer.classList.add('marquee-active');
-                // 跑馬燈模式下，將換行符號替換為空格，避免版面錯亂
                 mainReminder.innerText = reminderText.replace(/\n/g, '   ');
             } else {
                 reminderContainer.classList.remove('marquee-active');
-                mainReminder.innerText = reminderText; // 保持換行
+                mainReminder.innerText = reminderText; 
             }
 
             document.getElementById('display-expected').innerText = expected;
             document.getElementById('display-actual').innerText = actual;
             document.getElementById('display-absent-list').innerText = absentList;
 
-            // 3. 處理課表切換
             const selectedGrade = document.getElementById('select-grade').value;
             const selectedDay = document.getElementById('select-day').value;
             currentSchedule = allSchedules[selectedGrade][selectedDay];
             renderSchedule();
 
-            // 4. 存入 LocalStorage
             localStorage.setItem('exam_board_grade', selectedGrade);
             localStorage.setItem('exam_board_day', selectedDay);
             localStorage.setItem('exam_board_reminder', reminderText);
-            localStorage.setItem('exam_board_marquee', marqueeEnabled); // 儲存跑馬燈狀態
+            localStorage.setItem('exam_board_marquee', marqueeEnabled);
             localStorage.setItem('exam_board_expected', expected);
             localStorage.setItem('exam_board_actual', actual);
             localStorage.setItem('exam_board_absent_list', absentList);
@@ -813,7 +810,6 @@
             document.getElementById('select-day').value = savedDay;
             currentSchedule = allSchedules[savedGrade][savedDay];
             
-            // 載入基本設定
             const items = ['reminder', 'expected', 'actual', 'absent_list'];
             const defaults = {
                 reminder: "準備考試\n請保持安靜",
@@ -831,18 +827,13 @@
             items.forEach(key => {
                 const savedVal = localStorage.getItem(`exam_board_${key}`);
                 const val = savedVal !== null ? savedVal : defaults[key];
-                
-                // 更新 Input
                 document.getElementById(ids[key][0]).value = val;
-                // 更新 Display (暫時更新，稍後會被跑馬燈邏輯覆蓋)
                 document.getElementById(ids[key][1]).innerText = val;
             });
 
-            // 載入跑馬燈設定
             const marqueeEnabled = localStorage.getItem('exam_board_marquee') === 'true';
             document.getElementById('input-reminder-marquee').checked = marqueeEnabled;
             
-            // 根據跑馬燈狀態更新顯示 (因為上面迴圈只用了 innerText 預設值)
             const reminderText = document.getElementById('input-reminder').value;
             const reminderContainer = document.getElementById('reminder-container');
             const mainReminder = document.getElementById('main-reminder');
