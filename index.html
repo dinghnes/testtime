@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>考場電子看板 - 極致美化版</title>
+    <title>考場電子看板 - 西寧國小版</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Roboto+Mono:wght@500;700&display=swap');
 
@@ -81,11 +81,10 @@
         }
 
         .clock-label { 
-            font-size: 1.2rem; 
+            font-size: 1.5rem; /* 稍微加大字體 */
             color: var(--text-secondary); 
             font-weight: 700;
-            letter-spacing: 3px;
-            text-transform: uppercase;
+            letter-spacing: 2px;
             margin-bottom: 10px;
         }
         
@@ -254,7 +253,6 @@
             border-right: 1px solid rgba(0,0,0,0.05);
             border-top: 1px solid rgba(0,0,0,0.05);
             display: grid;
-            /* 修改為 3 欄位：應到、實到、詳細名單(寬) */
             grid-template-columns: 1fr 1fr 2fr;
         }
 
@@ -287,7 +285,7 @@
             border-right: none;
             background: #fdfdfd;
         }
-        /* 原本的標題 CSS 已移除，直接顯示內容 */
+        
         .absent-list { 
             font-size: 1.3rem; 
             color: #636e72; 
@@ -363,7 +361,7 @@
     <div class="container">
         <!-- 1. 時鐘區 -->
         <div class="clock-section">
-            <div class="clock-label">臺中市清水區西寧國小>台中市>>
+            <div class="clock-label">臺中市清水區西寧國小</div>
             <div class="clock-time" id="clock">00:00:00</div>
         </div>
 
@@ -403,11 +401,10 @@
                 <div class="stat-label">實到</div>
                 <div class="stat-value actual" id="display-actual">28</div>
             </div>
-            <!-- 已移除缺考人數欄位，且移除缺考名單的標題 -->
+            <!-- 左下角缺考資訊 -->
             <div class="stat-box list-box">
                 <div class="absent-list" id="display-absent-list">
-                    座號:原因
-                    
+                    缺考座號:原因
                 </div>
             </div>
         </div>
@@ -456,7 +453,7 @@
         
         <div class="form-group">
             <label>📋 缺考名單資訊</label>
-            <textarea id="input-absent-list" rows="3">31：自學&#10;32：潛能班</textarea>
+            <textarea id="input-absent-list" rows="3">缺考座號:原因</textarea>
         </div>
         
         <div class="btn-group">
@@ -659,7 +656,7 @@
                 reminder: "準備考試\n請保持安靜",
                 expected: "30",
                 actual: "28",
-                absent_list: "31：自學\n32：潛能班"
+                absent_list: "缺考座號:原因"
             };
 
             // 對應的 ID
