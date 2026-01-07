@@ -122,10 +122,76 @@
 
         .boss-avatar {
             font-size: 4.5rem;
-            animation: float 3s ease-in-out infinite;
-            filter: drop-shadow(0 8px 10px rgba(0,0,0,0.15));
             min-width: 90px;
             text-align: center;
+            cursor: pointer;
+            user-select: none;
+            filter: drop-shadow(0 8px 10px rgba(0,0,0,0.15));
+            /* 動畫由 JS class 控制 */
+            transform-origin: center bottom;
+        }
+        
+        /* === 動畫定義區 === */
+
+        /* 1. 一般狀態：懸浮呼吸 (Float) */
+        @keyframes float-breath {
+            0% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-10px) scale(1.05); }
+            100% { transform: translateY(0px) scale(1); }
+        }
+        .anim-float {
+            animation: float-breath 3s ease-in-out infinite;
+        }
+
+        /* 2. 殘血狀態：急促發抖 (Nervous Shake) */
+        @keyframes nervous-shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        .anim-shake {
+            animation: nervous-shake 0.8s infinite;
+        }
+
+        /* 3. 生氣狀態：劇烈震動 (Violent Angry) */
+        @keyframes violent-shake {
+            0% { transform: translate(0, 0) scale(1.2); }
+            25% { transform: translate(-5px, 5px) scale(1.2); }
+            50% { transform: translate(5px, -5px) scale(1.2); }
+            75% { transform: translate(-5px, -5px) scale(1.2); }
+            100% { transform: translate(0, 0) scale(1.2); }
+        }
+        .anim-angry {
+            animation: violent-shake 0.1s infinite; /* 極快 */
+            filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.6)) !important; /* 加紅光 */
+        }
+
+        /* 4. 哭泣狀態：彈跳 (Crying Bounce) */
+        @keyframes sad-bounce {
+            0%, 100% { transform: scale(1, 1) translateY(0); }
+            10% { transform: scale(1.1, 0.9) translateY(0); }
+            30% { transform: scale(0.9, 1.1) translateY(-20px); }
+            50% { transform: scale(1, 1) translateY(0); }
+            57% { transform: scale(1, 1) translateY(-7px); }
+            64% { transform: scale(1, 1) translateY(0); }
+            100% { transform: scale(1, 1) translateY(0); }
+        }
+        .anim-cry {
+            animation: sad-bounce 1.5s infinite;
+        }
+
+        /* 點擊時的微小縮放效果 */
+        .boss-avatar:active {
+            transform: scale(0.8) !important;
+            animation: none !important; /* 點下去瞬間暫停動畫 */
         }
 
         .hp-container {
@@ -192,8 +258,6 @@
             padding: 30px;
             color: var(--text-primary);
             text-shadow: 2px 2px 0px rgba(255,255,255,0.8);
-            
-            /* 跑馬燈必備：隱藏超出範圍 */
             overflow: hidden; 
             position: relative;
         }
@@ -201,39 +265,26 @@
         /* 預設靜態樣式 */
         #main-reminder {
             width: 100%;
-            white-space: pre-wrap; /* 支援換行 */
+            white-space: pre-wrap;
             line-height: 1.3;
         }
 
         /* 跑馬燈啟動樣式 */
         .reminder-area.marquee-active #main-reminder {
             width: auto;
-            white-space: nowrap; /* 強制不換行 */
+            white-space: nowrap;
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            animation: reminder-scroll 20s linear infinite; /* 動畫速度 */
-            padding-left: 100%; /* 從最右邊開始 */
+            animation: reminder-scroll 20s linear infinite;
+            padding-left: 100%;
             display: inline-block;
         }
 
         @keyframes reminder-scroll {
-            0% { transform: translate(0, -50%); }
-            100% { transform: translate(-100%, -50%); } /* 向左移動自身寬度 + 容器寬度 */
-        }
-        
-        /* 為了讓動畫連續性更好，我們通常用 translate -100% 配合 padding-left 100% */
-        @keyframes reminder-scroll {
             from { transform: translate(0, -50%); }
             to { transform: translate(-100%, -50%); left: 0; } 
-            /* 修正動畫邏輯：利用 padding-left 把內容推到容器外，然後 transform -100% 剛好移出去 */
         }
-        /* 簡單版跑馬燈 Keyframes */
-        @keyframes reminder-scroll {
-            from { transform: translate3d(0, -50%, 0); }
-            to { transform: translate3d(-100%, -50%, 0); }
-        }
-
 
         /* --- 3. 左中：課表區 --- */
         .schedule-section {
@@ -397,12 +448,6 @@
         
         .settings-highlight { background: #e3f2fd; padding: 20px; border-radius: 12px; border: 1px solid #bbdefb; margin-bottom: 25px;}
 
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
-
     </style>
 </head>
 <body>
@@ -418,7 +463,8 @@
         <div class="message-section">
             <!-- Boss 血條 -->
             <div class="boss-battle-area">
-                <div class="boss-avatar" id="boss-icon">☕</div>
+                <!-- 新增 onclick 事件來觸發彩蛋 -->
+                <div class="boss-avatar anim-float" id="boss-icon" onclick="bossClickReaction()">☕</div>
                 <div class="hp-container">
                     <div class="hp-text">
                         <span class="boss-name" id="boss-name">休息中</span>
@@ -430,7 +476,7 @@
                 </div>
             </div>
 
-            <!-- 提醒大字 (ID: reminder-container 作為外層遮罩, main-reminder 是內容) -->
+            <!-- 提醒大字 -->
             <div class="reminder-area" id="reminder-container">
                 <div id="main-reminder">
                     準備考試<br>請保持安靜
@@ -557,6 +603,11 @@
         let currentSchedule = []; 
 
         // --- 核心邏輯 ---
+        
+        // 彩蛋變數
+        let clickCount = 0;
+        let lastClickTime = 0;
+        let reactionEndTime = 0; // 彩蛋持續結束時間
 
         function updateTime() {
             const now = new Date();
@@ -566,6 +617,26 @@
             document.getElementById('clock').innerText = `${hours}:${minutes}:${seconds}`;
 
             updateScheduleAndBoss(now);
+        }
+
+        // 彩蛋點擊邏輯
+        function bossClickReaction() {
+            const now = Date.now();
+            // 如果點擊間隔太久(2秒)，重置計數
+            if (now - lastClickTime > 2000) {
+                clickCount = 0;
+            }
+            lastClickTime = now;
+            clickCount++;
+
+            // 觸發彩蛋
+            if (clickCount >= 10) {
+                reactionEndTime = now + 5000; // 反應持續 5 秒
+                clickCount = 0; // 重置計數
+                
+                // 強制立即更新畫面
+                updateTime();
+            }
         }
 
         function renderSchedule() {
@@ -625,6 +696,7 @@
 
             if (!isExamining) {
                 document.getElementById('boss-icon').innerText = "☕"; 
+                document.getElementById('boss-icon').className = "boss-avatar anim-float"; // 預設浮動
                 document.getElementById('boss-name').innerText = "休息時間 / 準備下一科";
                 document.getElementById('boss-timer').innerText = "";
                 const bar = document.getElementById('hp-bar');
@@ -639,7 +711,11 @@
             const bossTimer = document.getElementById('boss-timer');
             const hpBar = document.getElementById('hp-bar');
 
-            bossIcon.innerText = "👾"; 
+            // 預設圖示與狀態 class
+            let iconText = "👾";
+            let animClass = "anim-float"; // 預設: 懸浮
+            let colorVar = "";
+
             bossName.innerText = `BOSS：${subjectName}`;
             
             const remMin = Math.floor(remainingSeconds / 60);
@@ -650,13 +726,34 @@
             hpBar.style.width = `${percentage}%`;
 
             if (percentage > 50) {
-                hpBar.style.background = "var(--hp-high)"; 
+                colorVar = "var(--hp-high)"; 
+                animClass = "anim-float"; // 綠血: 懸浮
             } else if (percentage > 20) {
-                hpBar.style.background = "var(--hp-mid)";
+                colorVar = "var(--hp-mid)";
+                animClass = "anim-float"; // 黃血: 懸浮
             } else {
-                hpBar.style.background = "var(--hp-low)";
-                bossIcon.innerText = "🥵"; 
+                colorVar = "var(--hp-low)";
+                iconText = "🥵"; // 預設殘血圖示
+                animClass = "anim-shake"; // 紅血: 發抖
             }
+
+            // --- 彩蛋邏輯介入 ---
+            // 檢查是否處於彩蛋反應時間內
+            if (Date.now() < reactionEndTime) {
+                if (iconText === "👾") {
+                    iconText = "😡"; // 一般狀態 -> 生氣
+                    animClass = "anim-angry"; // 生氣動畫
+                } else if (iconText === "🥵") {
+                    iconText = "😭"; // 殘血狀態 -> 哭
+                    animClass = "anim-cry"; // 哭泣動畫
+                }
+            }
+            
+            // 最後才設定圖示、顏色、動畫Class
+            bossIcon.innerText = iconText;
+            // 加上基礎 class
+            bossIcon.className = `boss-avatar ${animClass}`;
+            hpBar.style.background = colorVar;
         }
 
         // --- 設定面板功能 ---
