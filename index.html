@@ -62,7 +62,8 @@
             border: 1px solid var(--glass-border);
             box-shadow: var(--shadow-light);
             display: grid;
-            grid-template-columns: 35% 65%;
+            /* 修改這裡：左邊寬度調整為 40% */
+            grid-template-columns: 40% 60%; 
             grid-template-rows: 25% 55% 20%;
             overflow: hidden;
         }
@@ -236,7 +237,7 @@
             right: -25px; /* 調整位置在進度條末端 */
             top: -45px;   /* 站在進度條上方 */
             font-size: 3rem;
-            /* transform: scaleX(-1);  <-- 移除這個翻轉，讓它面向預設的左邊 */
+            /* 恐龍預設面左，不需要翻轉 */
             filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));
             animation: dino-walk 0.6s ease-in-out infinite alternate;
             z-index: 5;
@@ -244,7 +245,6 @@
         }
 
         @keyframes dino-walk {
-            /* 修正動畫 keyframes，不需要 scaleX(-1) */
             0% { transform: translateY(0) rotate(0deg); }
             100% { transform: translateY(-5px) rotate(-5deg); }
         }
@@ -326,6 +326,7 @@
             opacity: 0.8;
         }
 
+        /* 當前科目的樣式 */
         .schedule-row.active {
             background: var(--active-bg);
             color: var(--active-text);
@@ -335,6 +336,39 @@
             z-index: 10;
         }
         .schedule-row.active .subject-time { opacity: 1; }
+
+        /* 已考完的樣式 */
+        .schedule-row.finished {
+            background-color: #f7f9fa; /* 變灰白 */
+            opacity: 0.7; /* 稍微變淡 */
+            box-shadow: none;
+        }
+        .schedule-row.finished .subject-name {
+            color: #95a5a6; /* 文字變灰 */
+        }
+        .schedule-row.finished .status-icon {
+            color: #00b894; /* 綠色勾勾 */
+            font-size: 2.2rem;
+            text-shadow: 0 2px 5px rgba(0,184,148,0.4);
+        }
+
+        /* 預設圖示區塊 */
+        .subject-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            overflow: hidden; /* 防止溢出 */
+        }
+        .subject-name {
+            white-space: nowrap; /* 確保不換行 */
+        }
+        .status-icon {
+            width: 35px; /* 固定寬度避免文字跳動 */
+            display: inline-block;
+            text-align: center;
+            font-weight: bold;
+            flex-shrink: 0; /* 確保圖示不被壓縮 */
+        }
 
         /* --- 4. 左下：考勤統計區 --- */
         .attendance-section {
@@ -652,7 +686,14 @@
                 const row = document.createElement('div');
                 row.className = 'schedule-row';
                 row.id = `schedule-${index}`;
-                row.innerHTML = `<div class="subject-name">${item.subject}</div><div class="subject-time">${item.start}~${item.end}</div>`;
+                // 修改 HTML 結構，加入狀態圖示欄位
+                row.innerHTML = `
+                    <div class="subject-container">
+                        <span class="status-icon"></span>
+                        <div class="subject-name">${item.subject}</div>
+                    </div>
+                    <div class="subject-time">${item.start}~${item.end}</div>
+                `;
                 container.appendChild(row);
             });
         }
@@ -666,19 +707,30 @@
             currentSchedule.forEach((item, index) => {
                 const row = document.getElementById(`schedule-${index}`);
                 if(!row) return;
+                
+                const iconSpan = row.querySelector('.status-icon');
 
+                // 重置所有狀態
                 row.classList.remove('active');
+                row.classList.remove('finished');
+                iconSpan.innerText = '';
 
                 const [sH, sM] = item.start.split(':').map(Number);
                 const [eH, eM] = item.end.split(':').map(Number);
                 const startMin = sH * 60 + sM;
                 const endMin = eH * 60 + eM;
 
-                if (currentTotalMin >= startMin && currentTotalMin < endMin) {
+                // 判斷邏輯
+                if (currentTotalMin >= endMin) {
+                    // 已考完
+                    row.classList.add('finished');
+                    iconSpan.innerText = '✔';
+                } else if (currentTotalMin >= startMin && currentTotalMin < endMin) {
+                    // 考試中
                     isExamining = true;
                     activeSubject = item;
                     row.classList.add('active');
-
+                    
                     // Boss 血條計算
                     const startTime = new Date(nowDate); startTime.setHours(sH, sM, 0);
                     const endTime = new Date(nowDate); endTime.setHours(eH, eM, 0);
@@ -691,6 +743,8 @@
                     if (percentage < 0) percentage = 0;
 
                     updateBossUI(item.subject, percentage, remaining);
+                } else {
+                    // 未開始 (預設狀態，不做額外處理)
                 }
             });
 
