@@ -174,6 +174,31 @@
         }
         .anim-cry { animation: sad-bounce 1.5s infinite; }
 
+        /* === 擊敗與勝利動畫 === */
+        @keyframes defeat-spin {
+            0% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.3) rotate(-15deg); }
+            50% { transform: scale(0.9) rotate(20deg) translateY(8px); }
+            75% { transform: scale(1.15) rotate(-10deg) translateY(12px); }
+            100% { transform: scale(1) rotate(0deg) translateY(5px); }
+        }
+        .anim-defeat {
+            animation: defeat-spin 1.2s ease-in-out infinite alternate;
+            filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.9)) !important;
+        }
+
+        /* 彩帶 Canvas */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            display: none;
+        }
+
         .boss-avatar:active {
             transform: scale(0.8) !important;
             animation: none !important;
@@ -570,6 +595,33 @@
             </div>
         </div>
 
+        <div class="form-group settings-highlight" style="background: #eef2ff; border-color: #c7d2fe;">
+            <label>🎮 角色造型自訂</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 8px;">
+                <div>
+                    <label style="font-size: 0.95rem; margin-bottom: 4px; color: var(--text-secondary); font-weight: 700;">👹 BOSS 造型</label>
+                    <select id="select-boss">
+                        <option value="monster">👾 外星怪獸</option>
+                        <option value="dragon">🐲 遠古巨龍</option>
+                        <option value="robot">🤖 戰鬥機器人</option>
+                        <option value="demon">😈 考試大魔王</option>
+                        <option value="ghost">👻 搗蛋幽靈</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 0.95rem; margin-bottom: 4px; color: var(--text-secondary); font-weight: 700;">🏃 跑者造型</label>
+                    <select id="select-runner">
+                        <option value="dino">🦖 奔跑暴龍</option>
+                        <option value="rocket">🚀 極速火箭</option>
+                        <option value="cat">🐱 疾走小貓</option>
+                        <option value="skater">🛹 滑板少年</option>
+                        <option value="lightning">⚡ 閃電飛人</option>
+                    </select>
+                </div>
+            </div>
+            <button type="button" class="btn" style="margin-top: 15px; width: 100%; background: linear-gradient(135deg, #6c5ce7, #a29bfe); font-size: 1rem; padding: 10px;" onclick="triggerVictoryPreview()">🎉 測試通關慶祝效果</button>
+        </div>
+
         <div class="form-group">
             <label>📢 提醒大字</label>
             <textarea id="input-reminder" rows="2">準備考試&#10;請保持安靜</textarea>
@@ -605,6 +657,161 @@
     </div>
 
     <script>
+        // --- 角色庫：BOSS 與 跑者 ---
+        const bossCharacters = {
+            monster: {
+                name: "外星怪獸",
+                normal: "👾",
+                nervous: "🥵",
+                angry: "😡",
+                cry: "😭",
+                defeat: "😵"
+            },
+            dragon: {
+                name: "遠古巨龍",
+                normal: "🐲",
+                nervous: "😰",
+                angry: "👺",
+                cry: "🥺",
+                defeat: "💤"
+            },
+            robot: {
+                name: "戰鬥機器人",
+                normal: "🤖",
+                nervous: "⚡",
+                angry: "💥",
+                cry: "⚙️",
+                defeat: "🪫"
+            },
+            demon: {
+                name: "考試大魔王",
+                normal: "😈",
+                nervous: "🥶",
+                angry: "👿",
+                cry: "😿",
+                defeat: "🏳️"
+            },
+            ghost: {
+                name: "搗蛋幽靈",
+                normal: "👻",
+                nervous: "😱",
+                angry: "💀",
+                cry: "💧",
+                defeat: "🪦"
+            }
+        };
+
+        const runnerCharacters = {
+            dino: "🦖",
+            rocket: "🚀",
+            cat: "🐱",
+            skater: "🛹",
+            lightning: "⚡"
+        };
+
+        let currentBossKey = 'monster';
+        let currentRunnerKey = 'dino';
+
+        // --- 輕量彩帶 (Confetti) 粒子引擎 ---
+        let confettiActive = false;
+        let confettiParticles = [];
+        const confettiColors = ['#ff7675', '#74b9ff', '#55efc4', '#ffeaa7', '#a29bfe', '#fd79a8', '#fdcb6e'];
+
+        function triggerConfetti(durationMs = 7000) {
+            const canvas = document.getElementById('confetti-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            canvas.style.display = 'block';
+
+            confettiParticles = [];
+            for (let i = 0; i < 160; i++) {
+                confettiParticles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * -canvas.height * 0.8,
+                    w: Math.random() * 14 + 6,
+                    h: Math.random() * 8 + 4,
+                    color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+                    vy: Math.random() * 4 + 2.5,
+                    vx: Math.random() * 4 - 2,
+                    angle: Math.random() * 360,
+                    angSpeed: (Math.random() - 0.5) * 10
+                });
+            }
+
+            confettiActive = true;
+            const startTime = Date.now();
+
+            function renderConfetti() {
+                if (!confettiActive) return;
+                const elapsed = Date.now() - startTime;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                confettiParticles.forEach(p => {
+                    p.y += p.vy;
+                    p.x += p.vx + Math.sin(p.y * 0.02) * 1.5;
+                    p.angle += p.angSpeed;
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.angle * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+
+                    if (p.y > canvas.height) {
+                        p.y = -15;
+                        p.x = Math.random() * canvas.width;
+                    }
+                });
+
+                if (elapsed < durationMs) {
+                    requestAnimationFrame(renderConfetti);
+                } else {
+                    confettiActive = false;
+                    canvas.style.display = 'none';
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            requestAnimationFrame(renderConfetti);
+        }
+
+        let victoryEndTime = 0;
+        let lastExamState = { wasExamining: false, subjectName: "" };
+        let victorySubjectName = "";
+
+        function triggerVictory(subjectName) {
+            victorySubjectName = subjectName || "考試";
+            victoryEndTime = Date.now() + 10000; // 慶祝持續 10 秒
+
+            triggerConfetti(7000);
+
+            const bossCfg = bossCharacters[currentBossKey] || bossCharacters.monster;
+            const bossIcon = document.getElementById('boss-icon');
+            const bossName = document.getElementById('boss-name');
+            const bossTimer = document.getElementById('boss-timer');
+            const hpBar = document.getElementById('hp-bar');
+            const mainReminder = document.getElementById('main-reminder');
+
+            bossIcon.innerText = bossCfg.defeat;
+            bossIcon.className = "boss-avatar anim-defeat";
+            bossName.innerText = `⚔️【${victorySubjectName}】討伐成功！`;
+            bossTimer.innerText = "K.O. ✨";
+            hpBar.style.width = "0%";
+            hpBar.style.background = "#00b894";
+            document.getElementById('dino-icon').style.display = 'none';
+
+            if (mainReminder) {
+                mainReminder.innerText = `🎉 恭喜大家！\n【${victorySubjectName}】BOSS 討伐成功！進入下課休息`;
+            }
+        }
+
+        function triggerVictoryPreview() {
+            closeSettings();
+            triggerVictory("模擬科目");
+        }
+
         // --- 資料庫：考程表 ---
         const allSchedules = {
             "high": { 
@@ -748,7 +955,32 @@
                 }
             });
 
+            // 檢查是否剛好從考試中轉變為考完（觸發勝利通關慶祝）
+            if (lastExamState.wasExamining && !isExamining) {
+                triggerVictory(lastExamState.subjectName);
+            }
+            lastExamState.wasExamining = isExamining;
+            if (isExamining && activeSubject) {
+                lastExamState.subjectName = activeSubject.subject;
+            }
+
             if (!isExamining) {
+                // 如果目前在通關慶祝中，維持勝利畫面
+                if (Date.now() < victoryEndTime) {
+                    return;
+                }
+
+                // 恢復原設定之提醒文字
+                const reminderContainer = document.getElementById('reminder-container');
+                const mainReminder = document.getElementById('main-reminder');
+                const savedReminder = localStorage.getItem('exam_board_reminder') || "準備考試\n請保持安靜";
+                const marqueeEnabled = localStorage.getItem('exam_board_marquee') === 'true';
+                if (!reminderContainer.classList.contains('marquee-active') && !marqueeEnabled) {
+                    if (mainReminder && mainReminder.innerText.includes('討伐成功')) {
+                        mainReminder.innerText = savedReminder;
+                    }
+                }
+
                 document.getElementById('boss-icon').innerText = "☕"; 
                 document.getElementById('boss-icon').className = "boss-avatar anim-float";
                 document.getElementById('boss-name').innerText = "休息時間 / 準備下一科";
@@ -757,11 +989,13 @@
                 bar.style.width = "100%";
                 bar.style.background = "#b2bec3"; 
                 
-                // 休息時間隱藏恐龍
+                // 休息時間隱藏跑者
                 document.getElementById('dino-icon').style.display = 'none';
             } else {
-                // 考試時間顯示恐龍
-                document.getElementById('dino-icon').style.display = 'block';
+                // 考試時間顯示跑者，並套用目前所選的造型
+                const dinoIcon = document.getElementById('dino-icon');
+                dinoIcon.innerText = runnerCharacters[currentRunnerKey] || "🦖";
+                dinoIcon.style.display = 'block';
             }
         }
 
@@ -771,8 +1005,10 @@
             const bossTimer = document.getElementById('boss-timer');
             const hpBar = document.getElementById('hp-bar');
 
+            const bossCfg = bossCharacters[currentBossKey] || bossCharacters.monster;
+
             // 預設圖示與狀態 class
-            let iconText = "👾";
+            let iconText = bossCfg.normal;
             let animClass = "anim-float"; 
             let colorVar = "";
 
@@ -793,17 +1029,17 @@
                 animClass = "anim-float"; 
             } else {
                 colorVar = "var(--hp-low)";
-                iconText = "🥵"; 
+                iconText = bossCfg.nervous; 
                 animClass = "anim-shake"; 
             }
 
             // --- 彩蛋邏輯介入 ---
             if (Date.now() < reactionEndTime) {
-                if (iconText === "👾") {
-                    iconText = "😡"; 
+                if (iconText === bossCfg.normal) {
+                    iconText = bossCfg.angry; 
                     animClass = "anim-angry"; 
-                } else if (iconText === "🥵") {
-                    iconText = "😭"; 
+                } else if (iconText === bossCfg.nervous) {
+                    iconText = bossCfg.cry; 
                     animClass = "anim-cry"; 
                 }
             }
@@ -846,6 +1082,18 @@
             currentSchedule = allSchedules[selectedGrade][selectedDay];
             renderSchedule();
 
+            const selectedBoss = document.getElementById('select-boss').value;
+            const selectedRunner = document.getElementById('select-runner').value;
+            currentBossKey = selectedBoss;
+            currentRunnerKey = selectedRunner;
+            localStorage.setItem('exam_board_boss', selectedBoss);
+            localStorage.setItem('exam_board_runner', selectedRunner);
+            
+            const dinoIcon = document.getElementById('dino-icon');
+            if (dinoIcon) {
+                dinoIcon.innerText = runnerCharacters[currentRunnerKey] || "🦖";
+            }
+
             localStorage.setItem('exam_board_grade', selectedGrade);
             localStorage.setItem('exam_board_day', selectedDay);
             localStorage.setItem('exam_board_reminder', reminderText);
@@ -864,6 +1112,15 @@
             document.getElementById('select-grade').value = savedGrade;
             document.getElementById('select-day').value = savedDay;
             currentSchedule = allSchedules[savedGrade][savedDay];
+
+            currentBossKey = localStorage.getItem('exam_board_boss') || 'monster';
+            currentRunnerKey = localStorage.getItem('exam_board_runner') || 'dino';
+            document.getElementById('select-boss').value = currentBossKey;
+            document.getElementById('select-runner').value = currentRunnerKey;
+            const dinoIcon = document.getElementById('dino-icon');
+            if (dinoIcon) {
+                dinoIcon.innerText = runnerCharacters[currentRunnerKey] || "🦖";
+            }
             
             const items = ['reminder', 'expected', 'actual', 'absent_list'];
             const defaults = {
@@ -910,5 +1167,8 @@
         };
 
     </script>
+
+    <!-- 慶祝彩帶畫布 -->
+    <canvas id="confetti-canvas"></canvas>
 </body>
 </html>
