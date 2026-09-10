@@ -507,8 +507,34 @@
             cursor: pointer; font-size: 24px; border: none; 
             transition: all 0.3s; display: flex; align-items: center; justify-content: center;
             opacity: 0.5;
+            z-index: 1000;
         }
         #config-btn:hover { opacity: 1; transform: rotate(90deg) scale(1.1); }
+
+        #fullscreen-btn { 
+            position: fixed; bottom: 80px; right: 20px; 
+            width: 50px; height: 50px; border-radius: 50%;
+            background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            cursor: pointer; font-size: 22px; border: none; 
+            transition: all 0.3s; display: flex; align-items: center; justify-content: center;
+            opacity: 0.5;
+            z-index: 1000;
+        }
+        #fullscreen-btn:hover { opacity: 1; transform: scale(1.1); }
+
+        /* 最後 5 分鐘緊張微光呼吸動畫 */
+        @keyframes urgent-pulse {
+            0%, 100% {
+                box-shadow: 0 10px 25px rgba(0,0,0,0.05), 0 0 0 rgba(255, 118, 117, 0);
+            }
+            50% {
+                box-shadow: 0 10px 30px rgba(255, 118, 117, 0.35), 0 0 25px rgba(255, 118, 117, 0.55);
+            }
+        }
+        .boss-battle-area.urgent-mode {
+            animation: urgent-pulse 1.8s infinite ease-in-out;
+            border-color: rgba(255, 118, 117, 0.6) !important;
+        }
         
         .settings-highlight { background: #e3f2fd; padding: 20px; border-radius: 12px; border: 1px solid #bbdefb; margin-bottom: 25px;}
 
@@ -573,8 +599,9 @@
         </div>
     </div>
 
-    <!-- 設定按鈕 -->
-    <button id="config-btn" onclick="openSettings()">⚙️</button>
+    <!-- 懸浮控制按鈕 -->
+    <button id="fullscreen-btn" onclick="toggleFullscreen()" title="切換全螢幕 (快捷鍵 F)">🖥️</button>
+    <button id="config-btn" onclick="openSettings()" title="看板設定">⚙️</button>
 
     <!-- 設定面板 -->
     <div id="settings-panel">
@@ -630,6 +657,11 @@
                 <input type="checkbox" id="input-reminder-marquee">
                 <label for="input-reminder-marquee">開啟跑馬燈模式 (單行捲動)</label>
             </div>
+            
+            <div class="checkbox-wrapper" style="margin-top: 8px;">
+                <input type="checkbox" id="input-alert-5min" checked>
+                <label for="input-alert-5min">⚠️ 開啟最後 5 分鐘警示 (自動提醒檢查劃卡與姓名)</label>
+            </div>
         </div>
 
         <hr style="border: 0; border-top: 1px dashed #ccc; margin: 25px 0;">
@@ -637,17 +669,18 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
             <div class="form-group" style="margin-bottom: 0;">
                 <label>應到人數</label>
-                <input type="number" id="input-expected" value="30">
+                <input type="number" id="input-expected" value="30" oninput="autoCalculateAttendance()">
             </div>
             <div class="form-group" style="margin-bottom: 0;">
-                <label>實到人數</label>
+                <label>實到人數 <span style="font-size: 0.8rem; color: #0984e3; font-weight: normal;">(智慧連動)</span></label>
                 <input type="number" id="input-actual" value="28">
             </div>
         </div>
         
         <div class="form-group">
-            <label>📋 缺考名單資訊</label>
-            <textarea id="input-absent-list" rows="3">缺考座號:原因</textarea>
+            <label>📋 缺考名單資訊 <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: normal;">(自動計算缺考人數並扣減實到)</span></label>
+            <textarea id="input-absent-list" rows="3" oninput="autoCalculateAttendance()">缺考座號:原因</textarea>
+            <div id="absent-calc-hint" style="font-size: 0.85rem; color: #0984e3; margin-top: 5px;"></div>
         </div>
         
         <div class="btn-group">
@@ -812,6 +845,77 @@
             triggerVictory("模擬科目");
         }
 
+        // --- 實務功能：全螢幕模式與快捷鍵 ---
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.warn("全螢幕請求被阻止：", err);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            const btn = document.getElementById('fullscreen-btn');
+            if (btn) {
+                btn.innerText = document.fullscreenElement ? '🗗' : '🖥️';
+                btn.title = document.fullscreenElement ? '退出全螢幕 (快捷鍵 F / Esc)' : '切換全螢幕 (快捷鍵 F)';
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+            if (tag === 'input' || tag === 'textarea' || tag === 'select') {
+                return;
+            }
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                toggleFullscreen();
+            }
+        });
+
+        // --- 實務功能：考勤人數智慧自動連動計算 ---
+        function parseAbsentCount(text) {
+            if (!text) return 0;
+            const trimmed = text.trim();
+            if (!trimmed || trimmed === '無' || trimmed === '缺考座號:原因' || trimmed === '全勤' || trimmed === '全到') {
+                return 0;
+            }
+            // 依換行、逗號、分號、頓號分割各項紀錄
+            const items = trimmed.split(/[\n,;，；、]+/).map(s => s.trim()).filter(s => s.length > 0);
+            const validItems = items.filter(item => {
+                return item !== '無' && item !== '缺考座號:原因' && item !== '全勤' && item !== '全到';
+            });
+            return validItems.length;
+        }
+
+        function autoCalculateAttendance() {
+            const expectedInput = document.getElementById('input-expected');
+            const actualInput = document.getElementById('input-actual');
+            const absentInput = document.getElementById('input-absent-list');
+            const hint = document.getElementById('absent-calc-hint');
+
+            const expected = parseInt(expectedInput.value, 10);
+            if (isNaN(expected)) return;
+
+            const absentCount = parseAbsentCount(absentInput.value);
+            const calculatedActual = Math.max(0, expected - absentCount);
+            actualInput.value = calculatedActual;
+
+            if (hint) {
+                if (absentCount > 0) {
+                    hint.innerText = `💡 偵測到缺考 ${absentCount} 人，已自動扣減並更新實到為 ${calculatedActual} 人`;
+                    hint.style.color = '#0984e3';
+                } else {
+                    hint.innerText = `💡 目前無人缺考，實到人數自動等於應到 (${expected} 人)`;
+                    hint.style.color = '#00b894';
+                }
+            }
+        }
+
         // --- 資料庫：考程表 ---
         const allSchedules = {
             "high": { 
@@ -949,6 +1053,26 @@
                     let percentage = ((remaining / totalDuration) * 100).toFixed(1);
                     if (percentage < 0) percentage = 0;
 
+                    // 最後 5 分鐘警示處理
+                    const alert5MinEnabled = localStorage.getItem('exam_board_alert_5min') !== 'false';
+                    const bossBattleArea = document.querySelector('.boss-battle-area');
+                    const reminderContainer = document.getElementById('reminder-container');
+                    const mainReminder = document.getElementById('main-reminder');
+                    const marqueeEnabled = localStorage.getItem('exam_board_marquee') === 'true';
+
+                    if (alert5MinEnabled && remaining <= 300 && remaining > 0) {
+                        if (bossBattleArea) bossBattleArea.classList.add('urgent-mode');
+                        if (!marqueeEnabled && mainReminder && !mainReminder.innerText.includes('最後 5 分鐘')) {
+                            mainReminder.innerText = "⚠️ 距離考試結束僅剩最後 5 分鐘！\n請仔細檢查劃卡、座號與姓名";
+                        }
+                    } else {
+                        if (bossBattleArea) bossBattleArea.classList.remove('urgent-mode');
+                        if (!marqueeEnabled && mainReminder && mainReminder.innerText.includes('最後 5 分鐘')) {
+                            const savedReminder = localStorage.getItem('exam_board_reminder') || "準備考試\n請保持安靜";
+                            mainReminder.innerText = savedReminder;
+                        }
+                    }
+
                     updateBossUI(item.subject, percentage, remaining);
                 } else {
                     // 未開始 (預設狀態，不做額外處理)
@@ -965,6 +1089,9 @@
             }
 
             if (!isExamining) {
+                const bossBattleArea = document.querySelector('.boss-battle-area');
+                if (bossBattleArea) bossBattleArea.classList.remove('urgent-mode');
+
                 // 如果目前在通關慶祝中，維持勝利畫面
                 if (Date.now() < victoryEndTime) {
                     return;
@@ -976,7 +1103,7 @@
                 const savedReminder = localStorage.getItem('exam_board_reminder') || "準備考試\n請保持安靜";
                 const marqueeEnabled = localStorage.getItem('exam_board_marquee') === 'true';
                 if (!reminderContainer.classList.contains('marquee-active') && !marqueeEnabled) {
-                    if (mainReminder && mainReminder.innerText.includes('討伐成功')) {
+                    if (mainReminder && (mainReminder.innerText.includes('討伐成功') || mainReminder.innerText.includes('最後 5 分鐘'))) {
                         mainReminder.innerText = savedReminder;
                     }
                 }
@@ -1094,6 +1221,9 @@
                 dinoIcon.innerText = runnerCharacters[currentRunnerKey] || "🦖";
             }
 
+            const alert5Min = document.getElementById('input-alert-5min').checked;
+            localStorage.setItem('exam_board_alert_5min', alert5Min);
+
             localStorage.setItem('exam_board_grade', selectedGrade);
             localStorage.setItem('exam_board_day', selectedDay);
             localStorage.setItem('exam_board_reminder', reminderText);
@@ -1121,6 +1251,9 @@
             if (dinoIcon) {
                 dinoIcon.innerText = runnerCharacters[currentRunnerKey] || "🦖";
             }
+
+            const alert5Min = localStorage.getItem('exam_board_alert_5min') !== 'false';
+            document.getElementById('input-alert-5min').checked = alert5Min;
             
             const items = ['reminder', 'expected', 'actual', 'absent_list'];
             const defaults = {
@@ -1142,6 +1275,8 @@
                 document.getElementById(ids[key][0]).value = val;
                 document.getElementById(ids[key][1]).innerText = val;
             });
+
+            autoCalculateAttendance();
 
             const marqueeEnabled = localStorage.getItem('exam_board_marquee') === 'true';
             document.getElementById('input-reminder-marquee').checked = marqueeEnabled;
