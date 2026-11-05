@@ -1001,7 +1001,7 @@
             
             <div class="checkbox-wrapper" style="margin-top: 8px;">
                 <input type="checkbox" id="input-alert-5min" checked>
-                <label for="input-alert-5min">⚠️ 開啟最後 5 分鐘警示 (自動提醒檢查劃卡與姓名)</label>
+                <label for="input-alert-5min">⚠️ 開啟最後 5 分鐘警示 (提醒再次檢查考卷跟姓名)</label>
             </div>
         </div>
 
@@ -1541,7 +1541,7 @@
                     if (alert5MinEnabled && remaining <= 300 && remaining > 0) {
                         if (bossBattleArea) bossBattleArea.classList.add('urgent-mode');
                         if (!marqueeEnabled && mainReminder && !mainReminder.innerText.includes('最後 5 分鐘')) {
-                            mainReminder.innerText = "⚠️ 距離考試結束僅剩最後 5 分鐘！\n請仔細檢查劃卡、座號與姓名";
+                            mainReminder.innerText = "⚠️ 距離考試結束僅剩最後 5 分鐘！\n請再次檢查考卷跟姓名";
                         }
                     } else {
                         if (bossBattleArea) bossBattleArea.classList.remove('urgent-mode');
