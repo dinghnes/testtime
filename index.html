@@ -888,6 +888,187 @@
             overflow: hidden;
         }
 
+    
+        /* 🎧 英語聽力測驗專用面板 */
+        .audio-listening-panel {
+            display: none;
+            background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+            border: 2px solid #86efac;
+            border-radius: 18px;
+            margin: 0 22px 14px 22px;
+            padding: 10px 18px;
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.08);
+            flex-direction: column;
+            gap: 8px;
+            flex-shrink: 0;
+            box-sizing: border-box;
+            animation: fadeInAudio 0.35s ease;
+        }
+
+        @keyframes fadeInAudio {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .audio-listening-panel.active {
+            display: flex !important;
+        }
+
+        .audio-top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .audio-badge {
+            background: #16a34a;
+            color: white;
+            font-size: 0.92rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 10px;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        .audio-track-dropdown {
+            flex: 1;
+            padding: 5px 10px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            border: 1.5px solid #86efac;
+            border-radius: 10px;
+            background: white;
+            color: #15803d;
+            outline: none;
+            cursor: pointer;
+            min-width: 0;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .audio-volume-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .audio-vol-icon { font-size: 1.15rem; cursor: pointer; user-select: none; }
+        .audio-vol-slider {
+            width: 65px;
+            height: 6px;
+            accent-color: #16a34a;
+            cursor: pointer;
+        }
+
+        .audio-speed-btn {
+            background: #e2e8f0;
+            color: #334155;
+            font-size: 0.85rem;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 7px;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .audio-speed-btn:hover { background: #cbd5e1; }
+
+        .audio-bottom-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .audio-btn {
+            background: white;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 6px 12px;
+            font-size: 0.92rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #334155;
+            user-select: none;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .audio-btn:hover { background: #f1f5f9; transform: translateY(-1px); }
+
+        .audio-btn.btn-play-pause {
+            background: #16a34a;
+            border-color: #15803d;
+            color: white;
+            font-size: 1.05rem;
+            padding: 6px 18px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(22, 163, 74, 0.25);
+            font-weight: 900;
+        }
+        .audio-btn.btn-play-pause.playing {
+            background: #e11d48;
+            border-color: #be123c;
+            box-shadow: 0 4px 10px rgba(225, 29, 72, 0.25);
+            animation: pulse-audio-btn 1.6s infinite ease-in-out;
+        }
+
+        @keyframes pulse-audio-btn {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+
+        .audio-scrubber-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .audio-time {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.92rem;
+            font-weight: 800;
+            color: #334155;
+            white-space: nowrap;
+        }
+
+        .audio-progress-slider {
+            flex: 1;
+            height: 7px;
+            border-radius: 4px;
+            accent-color: #16a34a;
+            cursor: pointer;
+            min-width: 40px;
+        }
+
+        /* 試音按鈕在下課時段提醒標籤旁顯示 */
+        .preview-audio-trigger {
+            display: none;
+            margin-left: 8px;
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            cursor: pointer;
+            vertical-align: middle;
+        }
+        .preview-audio-trigger:hover { background: #059669; }
+
     </style>
 </head>
 <body>
@@ -935,6 +1116,40 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+                                <!-- 🎧 英語聽力測驗專用面板 (考英語科時自動展開，或點擊試音開啟) -->
+                <div class="audio-listening-panel" id="audio-listening-panel">
+                    <div class="audio-top-row">
+                        <span class="audio-badge">🎧 英語聽力測驗</span>
+                        <select id="audio-track-select" class="audio-track-dropdown" onchange="onAudioTrackSelectChange()">
+                            <option value="audio/grade6.m4a" data-grade="6">六年級 (六年級英語月考音檔.m4a)</option>
+                            <option value="audio/grade5.m4a" data-grade="5">五年級 (五年級英語月考音檔.m4a)</option>
+                            <option value="audio/grade4.m4a" data-grade="4">四年級 (四年級英語月考音檔.m4a)</option>
+                            <option value="audio/grade3.m4a" data-grade="3">三年級 (三年級英語月考音檔.m4a)</option>
+                            <option value="custom">📁 本機自選音檔...</option>
+                        </select>
+                        <input type="file" id="audio-file-input" accept="audio/*" style="display: none;" onchange="onAudioCustomFileChosen(event)">
+                        
+                        <div class="audio-volume-group">
+                            <span class="audio-vol-icon" id="audio-vol-icon" onclick="toggleAudioMute()" title="靜音 / 開啟音量">🔊</span>
+                            <input type="range" class="audio-vol-slider" id="audio-vol-slider" min="0" max="1" step="0.05" value="0.9" oninput="onAudioVolumeSlider(event)" title="調整音量">
+                            <span class="audio-speed-btn" id="audio-speed-btn" onclick="cycleAudioSpeed()" title="點擊切換播放倍速 (1.0x / 0.8x / 1.2x)">1.0x</span>
+                        </div>
+                    </div>
+                    <div class="audio-bottom-row">
+                        <button class="audio-btn btn-rewind" onclick="audioSeekRelative(-10)" title="倒退 10 秒 (重複聽題目時超實用)">⏪ 10s</button>
+                        <button class="audio-btn btn-play-pause" id="audio-play-btn" onclick="toggleAudioPlay()">▶ 播放聽力</button>
+                        <button class="audio-btn btn-forward" onclick="audioSeekRelative(10)" title="快進 10 秒">10s ⏩</button>
+                        <button class="audio-btn btn-restart" onclick="audioRestart()" title="重頭播放">🔄</button>
+                        
+                        <div class="audio-scrubber-group">
+                            <span class="audio-time" id="audio-cur-time">00:00</span>
+                            <input type="range" class="audio-progress-slider" id="audio-progress-bar" min="0" max="100" value="0" step="0.1" oninput="onAudioProgressInput(event)" onchange="onAudioProgressChange(event)">
+                            <span class="audio-time" id="audio-dur-time">--:--</span>
+                        </div>
+                    </div>
+                    <audio id="exam-audio-el" preload="auto" src="audio/grade6.m4a"></audio>
                 </div>
 
                 <!-- 考勤統計與缺考資訊專區 (水平平行並列) -->
@@ -1048,6 +1263,22 @@
                     <option value="day1">第一天</option>
                     <option value="day2">第二天</option>
                 </select>
+            </div>
+        </div>
+
+                <div class="form-group settings-highlight" style="background: #f0fdf4; border-color: #86efac;">
+            <label>🎧 英語聽力測驗設定 & 音響試音</label>
+            <div style="font-size: 0.9rem; color: #15803d; margin-bottom: 8px;">
+                系統於考「英語」時會自動於右側展開聽力播放器，您亦可在此先行試聽播放設備：
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="settings-audio-select" onchange="onSettingsAudioSelectChange()" style="flex: 1;">
+                    <option value="audio/grade6.m4a">六年級 (六年級英語月考音檔.m4a)</option>
+                    <option value="audio/grade5.m4a">五年級 (五年級英語月考音檔.m4a)</option>
+                    <option value="audio/grade4.m4a">四年級 (四年級英語月考音檔.m4a)</option>
+                    <option value="audio/grade3.m4a">三年級 (三年級英語月考音檔.m4a)</option>
+                </select>
+                <button type="button" class="btn" style="background: #16a34a; white-space: nowrap; padding: 10px 16px;" onclick="testPlayAudioFromSettings()" id="settings-audio-play-btn">▶ 試音</button>
             </div>
         </div>
 
@@ -1575,10 +1806,12 @@
                     container.classList.add('exam-mode');
                     container.classList.remove('break-mode');
                     updateSchoolLabel(true);
+                    checkAndToggleAudioPanel(activeSubject);
                 } else {
                     container.classList.add('break-mode');
                     container.classList.remove('exam-mode');
                     updateSchoolLabel(false);
+                    checkAndToggleAudioPanel(null);
                 }
             }
 
@@ -1760,6 +1993,272 @@
             hpBar.style.background = colorVar;
         }
 
+        
+        // ==========================================
+        // 🎧 英語聽力測驗專用播放器控制器
+        // ==========================================
+        let currentAudioSpeed = 1.0;
+        let isAudioDragging = false;
+        let manualAudioOpen = false;
+
+        function getAudioEl() {
+            return document.getElementById('exam-audio-el');
+        }
+
+        function formatAudioTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) return '00:00';
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        function initAudioPlayer() {
+            const audio = getAudioEl();
+            if (!audio) return;
+
+            audio.addEventListener('loadedmetadata', () => {
+                const durEl = document.getElementById('audio-dur-time');
+                if (durEl) durEl.innerText = formatAudioTime(audio.duration);
+            });
+
+            audio.addEventListener('timeupdate', () => {
+                if (!isAudioDragging) {
+                    const curEl = document.getElementById('audio-cur-time');
+                    const barEl = document.getElementById('audio-progress-bar');
+                    if (curEl) curEl.innerText = formatAudioTime(audio.currentTime);
+                    if (barEl && audio.duration) {
+                        barEl.value = (audio.currentTime / audio.duration) * 100;
+                    }
+                }
+            });
+
+            audio.addEventListener('play', () => {
+                const btn = document.getElementById('audio-play-btn');
+                if (btn) {
+                    btn.innerHTML = '⏸ 暫停聽力';
+                    btn.classList.add('playing');
+                }
+                const sBtn = document.getElementById('settings-audio-play-btn');
+                if (sBtn) sBtn.innerText = '⏸ 停止';
+            });
+
+            audio.addEventListener('pause', () => {
+                const btn = document.getElementById('audio-play-btn');
+                if (btn) {
+                    btn.innerHTML = '▶ 播放聽力';
+                    btn.classList.remove('playing');
+                }
+                const sBtn = document.getElementById('settings-audio-play-btn');
+                if (sBtn) sBtn.innerText = '▶ 試音';
+            });
+
+            audio.addEventListener('ended', () => {
+                const btn = document.getElementById('audio-play-btn');
+                if (btn) {
+                    btn.innerHTML = '▶ 播放聽力';
+                    btn.classList.remove('playing');
+                }
+                const barEl = document.getElementById('audio-progress-bar');
+                if (barEl) barEl.value = 0;
+                audio.currentTime = 0;
+            });
+        }
+
+        function syncAudioTrackWithClass(classNameOrGrade) {
+            const trackSelect = document.getElementById('audio-track-select');
+            const settingsSelect = document.getElementById('settings-audio-select');
+            if (!trackSelect) return;
+
+            let targetVal = 'audio/grade6.m4a';
+            if (classNameOrGrade) {
+                if (classNameOrGrade.includes('三') || classNameOrGrade === '3' || classNameOrGrade.startsWith('3')) {
+                    targetVal = 'audio/grade3.m4a';
+                } else if (classNameOrGrade.includes('四') || classNameOrGrade === '4' || classNameOrGrade.startsWith('4')) {
+                    targetVal = 'audio/grade4.m4a';
+                } else if (classNameOrGrade.includes('五') || classNameOrGrade === '5' || classNameOrGrade.startsWith('5')) {
+                    targetVal = 'audio/grade5.m4a';
+                } else if (classNameOrGrade.includes('六') || classNameOrGrade === '6' || classNameOrGrade.startsWith('6')) {
+                    targetVal = 'audio/grade6.m4a';
+                }
+            }
+
+            // Only switch track if not currently playing
+            const audio = getAudioEl();
+            if (audio && audio.paused) {
+                trackSelect.value = targetVal;
+                if (settingsSelect) settingsSelect.value = targetVal;
+                audio.src = targetVal;
+                audio.load();
+            }
+        }
+
+        function onAudioTrackSelectChange() {
+            const trackSelect = document.getElementById('audio-track-select');
+            const audio = getAudioEl();
+            if (!trackSelect || !audio) return;
+
+            if (trackSelect.value === 'custom') {
+                const fileInput = document.getElementById('audio-file-input');
+                if (fileInput) fileInput.click();
+                return;
+            }
+
+            const wasPlaying = !audio.paused;
+            audio.src = trackSelect.value;
+            audio.load();
+            if (wasPlaying) {
+                audio.play().catch(e => console.log('Audio autoplay prevented:', e));
+            }
+
+            const settingsSelect = document.getElementById('settings-audio-select');
+            if (settingsSelect) settingsSelect.value = trackSelect.value;
+        }
+
+        function onSettingsAudioSelectChange() {
+            const settingsSelect = document.getElementById('settings-audio-select');
+            const trackSelect = document.getElementById('audio-track-select');
+            if (settingsSelect && trackSelect) {
+                trackSelect.value = settingsSelect.value;
+                onAudioTrackSelectChange();
+            }
+        }
+
+        function testPlayAudioFromSettings() {
+            const audio = getAudioEl();
+            if (!audio) return;
+            if (audio.paused) {
+                audio.play().catch(e => alert('無法播放音檔，請檢查瀏覽器音訊授權或檔案路徑：' + e.message));
+            } else {
+                audio.pause();
+            }
+        }
+
+        function onAudioCustomFileChosen(event) {
+            const file = event.target.files[0];
+            const audio = getAudioEl();
+            const trackSelect = document.getElementById('audio-track-select');
+            if (!file || !audio || !trackSelect) return;
+
+            const objectUrl = URL.createObjectURL(file);
+            audio.src = objectUrl;
+            audio.load();
+
+            // Update dropdown display
+            let customOption = trackSelect.querySelector('option[value="custom"]');
+            if (customOption) {
+                customOption.innerText = `📁 自選：${file.name}`;
+                customOption.value = objectUrl;
+                trackSelect.value = objectUrl;
+            }
+            audio.play().catch(e => console.log('Playback error:', e));
+        }
+
+        function toggleAudioPlay() {
+            const audio = getAudioEl();
+            if (!audio) return;
+            if (audio.paused) {
+                audio.play().catch(e => alert('播放音檔失敗：' + e.message));
+            } else {
+                audio.pause();
+            }
+        }
+
+        function audioSeekRelative(seconds) {
+            const audio = getAudioEl();
+            if (!audio) return;
+            const targetTime = Math.max(0, Math.min(audio.duration || 0, audio.currentTime + seconds));
+            audio.currentTime = targetTime;
+        }
+
+        function audioRestart() {
+            const audio = getAudioEl();
+            if (!audio) return;
+            audio.currentTime = 0;
+            audio.play().catch(e => console.log(e));
+        }
+
+        function onAudioProgressInput(event) {
+            isAudioDragging = true;
+            const audio = getAudioEl();
+            if (!audio || !audio.duration) return;
+            const targetSec = (event.target.value / 100) * audio.duration;
+            const curEl = document.getElementById('audio-cur-time');
+            if (curEl) curEl.innerText = formatAudioTime(targetSec);
+        }
+
+        function onAudioProgressChange(event) {
+            const audio = getAudioEl();
+            if (audio && audio.duration) {
+                audio.currentTime = (event.target.value / 100) * audio.duration;
+            }
+            isAudioDragging = false;
+        }
+
+        function onAudioVolumeSlider(event) {
+            const audio = getAudioEl();
+            const val = parseFloat(event.target.value);
+            if (audio) audio.volume = val;
+            const icon = document.getElementById('audio-vol-icon');
+            if (icon) {
+                icon.innerText = val === 0 ? '🔇' : (val < 0.5 ? '🔉' : '🔊');
+            }
+        }
+
+        function toggleAudioMute() {
+            const audio = getAudioEl();
+            const slider = document.getElementById('audio-vol-slider');
+            const icon = document.getElementById('audio-vol-icon');
+            if (!audio) return;
+
+            if (audio.volume > 0) {
+                audio.dataset.prevVol = audio.volume;
+                audio.volume = 0;
+                if (slider) slider.value = 0;
+                if (icon) icon.innerText = '🔇';
+            } else {
+                const prev = parseFloat(audio.dataset.prevVol) || 0.9;
+                audio.volume = prev;
+                if (slider) slider.value = prev;
+                if (icon) icon.innerText = '🔊';
+            }
+        }
+
+        function cycleAudioSpeed() {
+            const audio = getAudioEl();
+            const speedBtn = document.getElementById('audio-speed-btn');
+            if (!audio) return;
+
+            if (currentAudioSpeed === 1.0) {
+                currentAudioSpeed = 0.8;
+            } else if (currentAudioSpeed === 0.8) {
+                currentAudioSpeed = 1.2;
+            } else {
+                currentAudioSpeed = 1.0;
+            }
+
+            audio.playbackRate = currentAudioSpeed;
+            if (speedBtn) speedBtn.innerText = `${currentAudioSpeed.toFixed(1)}x`;
+        }
+
+        function checkAndToggleAudioPanel(activeSubject) {
+            const panel = document.getElementById('audio-listening-panel');
+            if (!panel) return;
+
+            const subjName = typeof activeSubject === 'string' ? activeSubject : (activeSubject && activeSubject.subject ? activeSubject.subject : '');
+            const isEnglish = subjName && (subjName.includes('英') || subjName.toLowerCase().includes('english'));
+            if (isEnglish || manualAudioOpen) {
+                if (!panel.classList.contains('active')) {
+                    panel.classList.add('active');
+                }
+            } else {
+                if (panel.classList.contains('active') && !manualAudioOpen) {
+                    panel.classList.remove('active');
+                    const audio = getAudioEl();
+                    if (audio && !audio.paused) audio.pause();
+                }
+            }
+        }
+
         // --- 設定面板功能 ---
         
                 // --- 班級人數與考場大字自動帶入功能 (西寧國小 115學年度第1學期統計) ---
@@ -1814,6 +2313,7 @@
             const className = selectedOption.text.split(' ')[0];
             currentClassName = className;
             if (customInput) customInput.value = className;
+            syncAudioTrackWithClass(className);
 
             // 1. 自動填入應到人數
             const expectedInput = document.getElementById('input-expected');
@@ -1925,6 +2425,7 @@
                     if (selectedOption) {
                         const className = selectedOption.text.split(' ')[0];
                         currentClassName = className;
+                        syncAudioTrackWithClass(className);
                         const count = selectedOption.getAttribute('data-count');
                         const boy = selectedOption.getAttribute('data-boy');
                         const girl = selectedOption.getAttribute('data-girl');
@@ -2001,6 +2502,7 @@
         }
 
         window.onload = function() {
+            initAudioPlayer();
             loadSavedSettings(); 
             renderSchedule(); 
             const urlParams = new URLSearchParams(window.location.search);
