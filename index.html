@@ -244,11 +244,15 @@
             50% { opacity: 0.85; transform: scale(1.04); }
         }
 
-        /* 考試中 (Exam Mode)：課表區展示當節超大焦點海報卡 (無任何捲軸、自適應不重疊) */
+        /* 考試中 (Exam Mode)：課表區焦點卡 + 下方超大考場班級卡 (完美利用左側空間) */
+        .exam-class-card {
+            display: none;
+        }
         .container.exam-mode .schedule-section {
+            flex: 0 0 auto;
             justify-content: center;
             align-items: center;
-            padding: 16px 20px;
+            padding: 16px 18px 8px 18px;
             overflow: hidden;
             min-width: 0;
         }
@@ -258,8 +262,8 @@
         .container.exam-mode .schedule-row.active {
             width: 100%;
             height: auto;
-            min-height: 200px;
-            max-height: 260px;
+            min-height: 180px;
+            max-height: 230px;
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto;
             grid-template-rows: auto auto;
@@ -268,12 +272,54 @@
             color: var(--active-text);
             box-shadow: var(--active-shadow);
             border-radius: 22px;
-            padding: 22px 24px;
+            padding: 20px 24px;
             border: none;
             transform: none;
             gap: 12px 10px;
             min-width: 0;
             overflow: hidden;
+        }
+        .container.exam-mode .exam-class-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+            border: 2px solid #7dd3fc;
+            border-radius: 22px;
+            padding: 14px 20px;
+            margin: 8px 18px 18px 18px;
+            box-shadow: 0 8px 24px rgba(2, 132, 199, 0.08);
+            flex: 1;
+            min-height: 130px;
+            max-height: 190px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .exam-class-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #0284c7;
+            color: #ffffff;
+            font-size: 1.05rem;
+            font-weight: 800;
+            padding: 4px 16px;
+            border-radius: 20px;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.2);
+        }
+        .exam-class-name {
+            font-size: clamp(2.4rem, 4vw, 3.4rem);
+            font-weight: 900;
+            color: #0369a1;
+            letter-spacing: 3px;
+            line-height: 1.15;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
         .container.exam-mode .schedule-row.active .schedule-badge-area {
             grid-column: 1 / 2;
@@ -820,7 +866,7 @@
     <div class="container break-mode">
         <!-- 上方主內容區 (左側考程時鐘 + 右側BOSS考勤) -->
         <div class="main-content">
-            <!-- 左側主面板 (時鐘 + 課表) -->
+            <!-- 左側主面板 (時鐘 + 課表 + 考試大字班級卡) -->
             <div class="left-panel">
                 <!-- 1. 時鐘區 -->
                 <div class="clock-section">
@@ -831,6 +877,15 @@
                 <!-- 2. 課表區 (考試焦點卡 / 下課全日清單) -->
                 <div class="schedule-section" id="schedule-list">
                     <!-- JS 自動產生 -->
+                </div>
+
+                <!-- 3. 考試專屬大字班級卡片 (僅在 exam-mode 顯示，完美利用左側剩餘空間) -->
+                <div class="exam-class-card" id="exam-class-card">
+                    <div class="exam-class-tag">
+                        <span>🏫</span>
+                        <span class="exam-class-badge-text">考場班級</span>
+                    </div>
+                    <div class="exam-class-name" id="exam-class-name">六年二班</div>
                 </div>
             </div>
 
@@ -943,6 +998,10 @@
                     <option value="605" data-count="25" data-grade="high" data-boy="13" data-girl="12">六年五班 (25人，男13 女12)</option>
                 </optgroup>
             </select>
+            <div id="custom-class-group" style="margin-top: 10px; display: none;">
+                <label style="font-size: 0.95rem; color: #0369a1; font-weight: 700; margin-bottom: 4px;">🏷️ 自訂班級 / 考場名稱</label>
+                <input type="text" id="input-custom-class" placeholder="例如：六年二班、音樂教室、第一考場" style="background: white;" oninput="onCustomClassInput()">
+            </div>
             <div id="class-select-hint" style="font-size: 0.85rem; color: #0284c7; margin-top: 6px; font-weight: 700;">
                 💡 選擇班級後，系統將自動填入應到人數並切換考程
             </div>
@@ -1390,7 +1449,8 @@
             }
         };
 
-        let currentSchedule = []; 
+        let currentSchedule = [];
+        let currentClassName = '六年二班'; 
 
         // --- 核心邏輯 ---
         
@@ -1485,9 +1545,11 @@
                 if (isExamining) {
                     container.classList.add('exam-mode');
                     container.classList.remove('break-mode');
+                    updateSchoolLabel(true);
                 } else {
                     container.classList.add('break-mode');
                     container.classList.remove('exam-mode');
+                    updateSchoolLabel(false);
                 }
             }
 
@@ -1671,25 +1733,58 @@
 
         // --- 設定面板功能 ---
         
-                // --- 班級人數自動帶入功能 (西寧國小 115學年度第1學期統計) ---
+                // --- 班級人數與考場大字自動帶入功能 (西寧國小 115學年度第1學期統計) ---
+        function updateSchoolLabel(isExamMode) {
+            const schoolLabel = document.getElementById('clock-school-label');
+            const examClassDisplay = document.getElementById('exam-class-name');
+            if (examClassDisplay) {
+                examClassDisplay.innerText = currentClassName || '六年二班';
+            }
+            if (schoolLabel) {
+                if (isExamMode) {
+                    // 考試中：時鐘上方顯示簡潔校名，下方獨立展示超大考場班級卡
+                    schoolLabel.innerText = "臺中市清水區西寧國小";
+                } else {
+                    // 下課中：大班級卡隱藏，時鐘上方保留班級識別
+                    schoolLabel.innerText = currentClassName ? `臺中市清水區西寧國小 ${currentClassName}` : "臺中市清水區西寧國小";
+                }
+            }
+        }
+
+        function onCustomClassInput() {
+            const customInput = document.getElementById('input-custom-class');
+            if (customInput) {
+                currentClassName = customInput.value.trim() || '考場';
+                const isExam = document.querySelector('.container')?.classList.contains('exam-mode');
+                updateSchoolLabel(isExam);
+            }
+        }
+
         function onClassSelectChange() {
             const classSelect = document.getElementById('select-class');
             if (!classSelect) return;
             const selectedOption = classSelect.options[classSelect.selectedIndex];
             const hint = document.getElementById('class-select-hint');
-            const schoolLabel = document.getElementById('clock-school-label');
+            const customGroup = document.getElementById('custom-class-group');
+            const customInput = document.getElementById('input-custom-class');
+            const isExam = document.querySelector('.container')?.classList.contains('exam-mode');
 
             if (classSelect.value === 'custom') {
-                if (hint) hint.innerText = "💡 自訂模式：請手動輸入應到人數與選擇考程";
-                if (schoolLabel) schoolLabel.innerText = "臺中市清水區西寧國小";
+                if (customGroup) customGroup.style.display = 'block';
+                if (hint) hint.innerText = "💡 自訂模式：請手動輸入班級名稱、應到人數與選擇考程";
+                currentClassName = (customInput && customInput.value.trim()) || '考場';
+                updateSchoolLabel(isExam);
                 return;
             }
 
+            if (customGroup) customGroup.style.display = 'none';
             const count = selectedOption.getAttribute('data-count');
             const grade = selectedOption.getAttribute('data-grade');
             const boy = selectedOption.getAttribute('data-boy');
             const girl = selectedOption.getAttribute('data-girl');
             const className = selectedOption.text.split(' ')[0];
+            currentClassName = className;
+            if (customInput) customInput.value = className;
 
             // 1. 自動填入應到人數
             const expectedInput = document.getElementById('input-expected');
@@ -1706,10 +1801,8 @@
                 renderSchedule();
             }
 
-            // 3. 看板標題加上班級名稱
-            if (schoolLabel) {
-                schoolLabel.innerText = `臺中市清水區西寧國小 ${className}`;
-            }
+            // 3. 更新考場標籤與大班級卡
+            updateSchoolLabel(isExam);
 
             // 4. 即時連動更新實到人數與版面
             autoCalculateAttendance();
@@ -1768,6 +1861,8 @@
 
             const selectedClass = document.getElementById('select-class').value;
             localStorage.setItem('exam_board_class', selectedClass);
+            const customClassVal = document.getElementById('input-custom-class') ? document.getElementById('input-custom-class').value.trim() : '';
+            localStorage.setItem('exam_board_custom_class', customClassVal);
             localStorage.setItem('exam_board_grade', selectedGrade);
             localStorage.setItem('exam_board_day', selectedDay);
             localStorage.setItem('exam_board_reminder', reminderText);
@@ -1783,29 +1878,41 @@
         }
 
         function loadSavedSettings() {
-            const savedClass = localStorage.getItem('exam_board_class') || 'custom';
+            const savedClass = localStorage.getItem('exam_board_class') || '602';
+            const savedCustomClass = localStorage.getItem('exam_board_custom_class') || '';
             const classSelect = document.getElementById('select-class');
+            const customGroup = document.getElementById('custom-class-group');
+            const customInput = document.getElementById('input-custom-class');
+
+            if (customInput) {
+                customInput.value = savedCustomClass;
+            }
+
             if (classSelect) {
                 classSelect.value = savedClass;
                 if (savedClass !== 'custom') {
+                    if (customGroup) customGroup.style.display = 'none';
                     const selectedOption = classSelect.options[classSelect.selectedIndex];
                     if (selectedOption) {
                         const className = selectedOption.text.split(' ')[0];
+                        currentClassName = className;
                         const count = selectedOption.getAttribute('data-count');
                         const boy = selectedOption.getAttribute('data-boy');
                         const girl = selectedOption.getAttribute('data-girl');
-                        const schoolLabel = document.getElementById('clock-school-label');
                         const hint = document.getElementById('class-select-hint');
-                        if (schoolLabel) {
-                            schoolLabel.innerText = `臺中市清水區西寧國小 ${className}`;
-                        }
                         if (hint && count) {
                             hint.innerHTML = `✅ 目前班級：<b>【${className}】</b>全班 <b>${count}</b> 人（男生 ${boy}、女生 ${girl}）`;
                         }
                     }
+                } else {
+                    if (customGroup) customGroup.style.display = 'block';
+                    currentClassName = savedCustomClass || '考場';
                 }
-
             }
+
+            const isExam = document.querySelector('.container')?.classList.contains('exam-mode');
+            updateSchoolLabel(isExam);
+
             const savedGrade = localStorage.getItem('exam_board_grade') || 'high';
             const savedDay = localStorage.getItem('exam_board_day') || 'day1';
             
