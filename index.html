@@ -30,6 +30,10 @@
             --hp-low: #ff7675;
         }
 
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Noto Sans TC', "Microsoft JhengHei", sans-serif;
             margin: 0;
@@ -51,7 +55,7 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* 主容器 */
+        /* 主容器 (縱向 flex：上方主內容 + 底部提醒欄) */
         .container {
             width: 96%;
             height: 94%;
@@ -61,34 +65,54 @@
             border-radius: 24px;
             border: 1px solid var(--glass-border);
             box-shadow: var(--shadow-light);
-            display: grid;
-            /* 修改這裡：左邊寬度調整為 40% */
-            grid-template-columns: 40% 60%; 
-            grid-template-rows: 25% 55% 20%;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
+        }
+
+        /* 主內容區：左側 44% (時鐘+課表)，右側 56% (Boss+平行考勤)，minmax 防擠壓 */
+        .main-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: minmax(0, 44%) minmax(0, 56%);
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        /* 左側主面板 (時鐘 + 課表) */
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            border-right: 1px solid rgba(0,0,0,0.06);
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.25);
+            min-width: 0;
         }
 
         /* --- 1. 左上：時鐘區 --- */
         .clock-section {
-            background: rgba(255, 255, 255, 0.4);
+            flex: 0 0 130px;
+            background: rgba(255, 255, 255, 0.45);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             border-bottom: 1px solid rgba(0,0,0,0.05);
-            border-right: 1px solid rgba(0,0,0,0.05);
+            padding: 6px 0;
+            flex-shrink: 0;
         }
 
         .clock-label { 
-            font-size: 1.5rem;
+            font-size: 1.35rem;
             color: var(--text-secondary); 
             font-weight: 700;
             letter-spacing: 2px;
-            margin-bottom: 10px;
+            margin-bottom: 4px;
         }
         
         .clock-time { 
-            font-size: 5rem; 
+            font-size: 4.6rem; 
             font-weight: 700; 
             font-family: 'Roboto Mono', monospace; 
             color: var(--text-primary);
@@ -96,34 +120,242 @@
             background: -webkit-linear-gradient(#2d3436, #636e72);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            line-height: 1;
         }
 
-        /* --- 2. 右側：主訊息區 --- */
-        .message-section {
-            grid-column: 2 / 3;
-            grid-row: 1 / 4;
-            background: rgba(255, 255, 255, 0.6);
+        /* --- 2. 左側：課表區 (考試焦點 / 下課全日清單) --- */
+        .schedule-section {
+            flex: 1;
+            min-height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 14px 18px;
             display: flex;
             flex-direction: column;
+            gap: 10px; 
+            overflow-x: hidden;
+            overflow-y: auto;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            min-width: 0;
+        }
+
+        .schedule-row {
+            flex: 1;
+            min-height: 54px;
+            background: white;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            padding: 0 14px;
+            color: var(--text-secondary);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: 2px solid transparent;
+            gap: 6px;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .schedule-badge-area {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+            min-width: 0;
+        }
+
+        .schedule-row .subject-name {
+            font-size: 1.6rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .schedule-row .subject-time {
+            margin-left: auto;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 1.35rem;
+            opacity: 0.85;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .status-icon {
+            width: 24px;
+            display: inline-block;
+            text-align: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .schedule-tag {
+            display: none;
+            font-size: 0.85rem;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 8px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* 已考完的樣式 */
+        .schedule-row.finished {
+            background-color: #f8fafc;
+            opacity: 0.65;
+            box-shadow: none;
+        }
+        .schedule-row.finished .subject-name {
+            color: #94a3b8;
+        }
+        .schedule-row.finished .status-icon {
+            color: #10b981;
+            font-size: 1.8rem;
+            text-shadow: 0 2px 5px rgba(16,185,129,0.3);
+        }
+
+        /* 下課中：下一節即將開始的樣式 */
+        .container.break-mode .schedule-row.next-up {
+            background: linear-gradient(120deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-color: #38bdf8;
+            color: #0369a1;
+            box-shadow: 0 6px 18px rgba(56, 189, 248, 0.25);
+            transform: scale(1.01);
+            z-index: 5;
+        }
+        .container.break-mode .schedule-row.next-up .subject-name {
+            font-weight: 900;
+            color: #0284c7;
+            font-size: 1.75rem;
+        }
+        .container.break-mode .schedule-row.next-up .subject-time {
+            color: #0284c7;
+            font-weight: 800;
+            opacity: 1;
+        }
+        .container.break-mode .schedule-row.next-up .schedule-tag {
+            display: inline-block;
+            background: #0284c7;
+            color: #fff;
+            animation: pulse-tag 1.5s infinite;
+        }
+
+        @keyframes pulse-tag {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.04); }
+        }
+
+        /* 考試中 (Exam Mode)：課表區展示當節超大焦點海報卡 (無任何捲軸、自適應不重疊) */
+        .container.exam-mode .schedule-section {
+            justify-content: center;
+            align-items: center;
+            padding: 16px 20px;
+            overflow: hidden;
+            min-width: 0;
+        }
+        .container.exam-mode .schedule-row:not(.active) {
+            display: none !important;
+        }
+        .container.exam-mode .schedule-row.active {
+            width: 100%;
+            height: auto;
+            min-height: 200px;
+            max-height: 260px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-rows: auto auto;
+            align-items: center;
+            background: var(--active-bg);
+            color: var(--active-text);
+            box-shadow: var(--active-shadow);
+            border-radius: 22px;
+            padding: 22px 24px;
+            border: none;
+            transform: none;
+            gap: 12px 10px;
+            min-width: 0;
+            overflow: hidden;
+        }
+        .container.exam-mode .schedule-row.active .schedule-badge-area {
+            grid-column: 1 / 2;
+            grid-row: 1 / 2;
+            justify-self: start;
+            min-width: 0;
+        }
+        .container.exam-mode .schedule-row.active .status-icon {
+            display: none;
+        }
+        .container.exam-mode .schedule-row.active .schedule-tag {
+            display: inline-block;
+            background: #ffffff;
+            color: #d97706;
+            font-size: 1.15rem;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: 12px;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            white-space: nowrap;
+        }
+        .container.exam-mode .schedule-row.active .subject-time {
+            grid-column: 2 / 3;
+            grid-row: 1 / 2;
+            justify-self: end;
+            margin-left: 0;
+            font-size: 1.45rem;
+            font-weight: 800;
+            font-family: 'Roboto Mono', monospace;
+            background: rgba(255, 255, 255, 0.28);
+            padding: 4px 12px;
+            border-radius: 12px;
+            color: #fff;
+            letter-spacing: 0.5px;
+            opacity: 1;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .container.exam-mode .schedule-row.active .subject-name {
+            grid-column: 1 / 3;
+            grid-row: 2 / 3;
+            font-size: 3.4rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            line-height: 1.15;
+            padding-left: 4px;
+            padding-top: 6px;
+            text-shadow: 0 3px 10px rgba(0,0,0,0.18);
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* --- 3. 右側主面板 (Boss + 考勤平行並列專區) --- */
+        .right-panel {
+            height: 100%;
+            background: rgba(255, 255, 255, 0.55);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
             border-left: 1px solid rgba(255,255,255,0.8);
+            min-width: 0;
         }
 
         /* Boss Battle Area */
         .boss-battle-area {
             background: white;
-            margin: 30px;
-            padding: 25px 40px;
+            margin: 18px 22px 14px 22px;
+            padding: 16px 28px;
             border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.04);
             display: flex;
             align-items: center;
-            gap: 30px;
+            gap: 22px;
             border: 1px solid rgba(0,0,0,0.03);
+            flex-shrink: 0;
         }
 
         .boss-avatar {
-            font-size: 4.5rem;
-            min-width: 90px;
+            font-size: 4.2rem;
+            min-width: 85px;
             text-align: center;
             cursor: pointer;
             user-select: none;
@@ -152,98 +384,75 @@
             90% { transform: translate(1px, 2px) rotate(0deg); }
             100% { transform: translate(1px, -2px) rotate(-1deg); }
         }
-        .anim-shake { animation: nervous-shake 0.8s infinite; }
+        .anim-shake { animation: nervous-shake 0.5s infinite; }
 
-        @keyframes violent-shake {
-            0% { transform: translate(0, 0) scale(1.2); }
-            25% { transform: translate(-5px, 5px) scale(1.2); }
-            50% { transform: translate(5px, -5px) scale(1.2); }
-            75% { transform: translate(-5px, -5px) scale(1.2); }
-            100% { transform: translate(0, 0) scale(1.2); }
+        @keyframes dying-fall {
+            0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+            50% { transform: translateY(20px) scale(0.9) rotate(20deg); opacity: 0.8; }
+            100% { transform: translateY(100px) scale(0.5) rotate(90deg); opacity: 0; }
         }
-        .anim-angry { animation: violent-shake 0.1s infinite; filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.6)) !important; }
-
-        @keyframes sad-bounce {
-            0%, 100% { transform: scale(1, 1) translateY(0); }
-            10% { transform: scale(1.1, 0.9) translateY(0); }
-            30% { transform: scale(0.9, 1.1) translateY(-20px); }
-            50% { transform: scale(1, 1) translateY(0); }
-            57% { transform: scale(1, 1) translateY(-7px); }
-            64% { transform: scale(1, 1) translateY(0); }
-            100% { transform: scale(1, 1) translateY(0); }
-        }
-        .anim-cry { animation: sad-bounce 1.5s infinite; }
-
-        /* === 擊敗與勝利動畫 === */
-        @keyframes defeat-spin {
-            0% { transform: scale(1) rotate(0deg); }
-            25% { transform: scale(1.3) rotate(-15deg); }
-            50% { transform: scale(0.9) rotate(20deg) translateY(8px); }
-            75% { transform: scale(1.15) rotate(-10deg) translateY(12px); }
-            100% { transform: scale(1) rotate(0deg) translateY(5px); }
-        }
-        .anim-defeat {
-            animation: defeat-spin 1.2s ease-in-out infinite alternate;
-            filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.9)) !important;
-        }
-
-        /* 彩帶 Canvas */
-        #confetti-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 9999;
-            display: none;
-        }
-
-        .boss-avatar:active {
-            transform: scale(0.8) !important;
-            animation: none !important;
-        }
+        .anim-die { animation: dying-fall 2s forwards; }
 
         .hp-container {
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
 
         .hp-text {
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
-            font-weight: 900;
+            font-size: 1.45rem;
+            font-weight: 700;
             color: var(--text-primary);
         }
-        .hp-text .boss-name { font-size: 2rem; }
-        .hp-text .boss-timer { font-size: 1.8rem; font-family: 'Roboto Mono', monospace; color: var(--text-secondary); }
 
-        /* 進度條外框 - 修改為 visible 讓恐龍可以凸出來 */
+        .boss-name { color: var(--text-primary); }
+        .boss-timer { font-family: 'Roboto Mono', monospace; color: var(--accent-color); font-weight: 700; }
+
         .hp-bar-frame {
-            height: 40px;
-            background-color: #dfe6e9;
+            height: 34px;
+            background: #e0e0e0;
             border-radius: 20px;
-            box-shadow: inset 0 2px 6px rgba(0,0,0,0.1);
+            overflow: visible;
+            box-shadow: inset 0 3px 6px rgba(0,0,0,0.1);
             position: relative;
-            overflow: visible; /* 關鍵：讓恐龍不被切掉 */
-            margin-top: 20px; /* 增加上方空間給恐龍 */
         }
 
-        /* 進度條填充 - 加入圓角 */
         .hp-bar-fill {
             height: 100%;
-            width: 100%;
-            background: var(--hp-high);
+            background: var(--success-color);
             border-radius: 20px;
-            transition: width 0.5s linear, background 0.5s;
+            transition: width 1s linear, background-color 0.5s;
             position: relative;
-            
-            /* 條紋背景 */
+        }
+
+        /* 奔跑的小恐龍 */
+        .dino-runner {
+            position: absolute;
+            right: -25px;
+            top: -28px;
+            font-size: 2.8rem;
+            user-select: none;
+            cursor: pointer;
+            z-index: 100;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+            animation: dino-run 0.6s infinite alternate ease-in-out;
+            transform-origin: bottom center;
+        }
+
+        @keyframes dino-run {
+            0% { transform: translateY(0) rotate(-6deg); }
+            100% { transform: translateY(-8px) rotate(6deg); }
+        }
+
+        .hp-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
             background-image: linear-gradient(
-                45deg, 
+                -45deg, 
                 rgba(255, 255, 255, 0.2) 25%, 
                 transparent 25%, 
                 transparent 50%, 
@@ -253,194 +462,260 @@
                 transparent
             );
             background-size: 40px 40px;
-            animation: stripe-move 2s linear infinite;
+            animation: move-stripes 2s linear infinite;
+            border-radius: 20px;
         }
 
-        /* 恐龍跑者 */
-        .dino-runner {
-            position: absolute;
-            right: -25px; /* 調整位置在進度條末端 */
-            top: -45px;   /* 站在進度條上方 */
-            font-size: 3rem;
-            /* 恐龍預設面左，不需要翻轉 */
-            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));
-            animation: dino-walk 0.6s ease-in-out infinite alternate;
-            z-index: 5;
-            pointer-events: none; /* 不干擾點擊 */
-        }
-
-        @keyframes dino-walk {
-            0% { transform: translateY(0) rotate(0deg); }
-            100% { transform: translateY(-5px) rotate(-5deg); }
-        }
-
-        @keyframes stripe-move {
+        @keyframes move-stripes {
             0% { background-position: 0 0; }
             100% { background-position: 40px 0; }
         }
 
-        /* 提醒大字 (支援跑馬燈) */
-        .reminder-area {
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 5rem;
-            font-weight: 900;
-            text-align: center;
-            padding: 30px;
-            color: var(--text-primary);
-            text-shadow: 2px 2px 0px rgba(255,255,255,0.8);
-            overflow: hidden; 
-            position: relative;
+        /* --- 4. 考勤與缺考專區 (水平平行並列) --- */
+        .attendance-section {
+            flex: 1;
+            margin: 0 22px 18px 22px;
+            min-height: 0;
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 16px;
+            overflow: hidden;
+            min-width: 0;
         }
 
-        #main-reminder {
-            width: 100%;
-            white-space: pre-wrap;
-            line-height: 1.3;
-        }
-
-        .reminder-area.marquee-active #main-reminder {
-            width: auto;
-            white-space: nowrap;
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            animation: reminder-scroll 20s linear infinite;
-            padding-left: 100%;
-            display: inline-block;
-        }
-
-        @keyframes reminder-scroll {
-            from { transform: translate(0, -50%); }
-            to { transform: translate(-100%, -50%); left: 0; } 
-        }
-
-        /* --- 3. 左中：課表區 --- */
-        .schedule-section {
-            grid-row: 2 / 3;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 20px;
+        /* 左邊：應到、實到、缺考 (縱向堆疊三卡) */
+        .attendance-stats {
             display: flex;
             flex-direction: column;
-            gap: 15px; 
-            border-right: 1px solid rgba(0,0,0,0.05);
-            overflow-y: auto;
-        }
-
-        .schedule-row {
-            flex: 1;
-            background: white;
-            border-radius: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 35px;
-            color: var(--text-secondary);
-            font-size: 2rem;
-            font-weight: 700;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            border: 1px solid transparent;
-        }
-
-        .schedule-row .subject-time {
-            font-family: 'Roboto Mono', monospace;
-            font-size: 1.8rem;
-            opacity: 0.8;
-        }
-
-        /* 當前科目的樣式 */
-        .schedule-row.active {
-            background: var(--active-bg);
-            color: var(--active-text);
-            box-shadow: var(--active-shadow);
-            transform: scale(1.02);
-            border: none;
-            z-index: 10;
-        }
-        .schedule-row.active .subject-time { opacity: 1; }
-
-        /* 已考完的樣式 */
-        .schedule-row.finished {
-            background-color: #f7f9fa; /* 變灰白 */
-            opacity: 0.7; /* 稍微變淡 */
-            box-shadow: none;
-        }
-        .schedule-row.finished .subject-name {
-            color: #95a5a6; /* 文字變灰 */
-        }
-        .schedule-row.finished .status-icon {
-            color: #00b894; /* 綠色勾勾 */
-            font-size: 2.2rem;
-            text-shadow: 0 2px 5px rgba(0,184,148,0.4);
-        }
-
-        /* 預設圖示區塊 */
-        .subject-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            overflow: hidden; /* 防止溢出 */
-        }
-        .subject-name {
-            white-space: nowrap; /* 確保不換行 */
-        }
-        .status-icon {
-            width: 35px; /* 固定寬度避免文字跳動 */
-            display: inline-block;
-            text-align: center;
-            font-weight: bold;
-            flex-shrink: 0; /* 確保圖示不被壓縮 */
-        }
-
-        /* --- 4. 左下：考勤統計區 --- */
-        .attendance-section {
-            grid-row: 3 / 4;
-            background: #fff;
-            border-right: 1px solid rgba(0,0,0,0.05);
-            border-top: 1px solid rgba(0,0,0,0.05);
-            display: grid;
-            grid-template-columns: 1fr 1fr 2fr;
+            gap: 10px;
+            height: 100%;
+            min-width: 0;
         }
 
         .stat-box {
+            flex: 1;
+            min-height: 64px;
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
             display: flex;
-            flex-direction: column;
-            justify-content: center;
             align-items: center;
-            border-right: 1px solid #f1f2f6;
-            transition: background 0.3s;
+            justify-content: space-between;
+            padding: 0 16px;
+            transition: all 0.3s ease;
+            min-width: 0;
         }
-        .stat-box:hover { background: #fdfdfd; }
+        .stat-box:hover {
+            box-shadow: 0 6px 14px rgba(0,0,0,0.05);
+            transform: translateY(-1px);
+        }
 
-        .stat-label { 
-            font-size: 1.1rem; 
-            color: #b2bec3; 
-            margin-bottom: 5px; 
-            font-weight: 700; 
-            letter-spacing: 1px;
+        .stat-box.stat-expected {
+            border-left: 6px solid #0984e3;
         }
-        .stat-value { font-size: 3rem; font-weight: 900; color: var(--text-primary); line-height: 1;}
+        .stat-box.stat-actual {
+            border-left: 6px solid #00b894;
+        }
+        .stat-box.stat-absent {
+            border-left: 6px solid #e17055;
+        }
+        .stat-box.stat-absent.zero-absent,
+        .stat-box.stat-absent:has(.stat-value.zero) {
+            border-left: 6px solid #cbd5e1;
+        }
+
+        .stat-label {
+            font-size: 1.2rem;
+            color: #475569;
+            font-weight: 800;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .stat-value {
+            font-size: 3.2rem;
+            font-weight: 900;
+            line-height: 1;
+            font-family: 'Roboto Mono', monospace;
+        }
         .stat-value.expected { color: #0984e3; }
         .stat-value.actual { color: #00b894; }
+        .stat-value.absent { color: #e17055; }
+        .stat-value.absent.zero { color: #94a3b8; }
 
-        .stat-box.list-box {
-            align-items: flex-start;
-            padding: 20px 25px;
+        /* 右邊：缺考資訊獨立大看板 */
+        .absent-board {
+            height: 100%;
+            min-height: 0;
+            background: #ffffff;
+            border: 2px dashed #cbd5e1;
+            border-radius: 18px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+            padding: 14px 18px;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
-            border-right: none;
-            background: #fdfdfd;
+            min-width: 0;
         }
-        
-        .absent-list { 
-            font-size: 1.3rem; 
-            color: #636e72; 
-            font-weight: 700; 
-            width: 100%;
-            white-space: pre-wrap;
-            line-height: 1.5;
+
+        .absent-board-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+            min-width: 0;
+        }
+
+        .absent-board-title-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .absent-board-icon {
+            font-size: 1.35rem;
+            flex-shrink: 0;
+        }
+
+        .absent-board-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #334155;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .absent-badge {
+            font-size: 0.95rem;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 10px;
+            background: #e2e8f0;
+            color: #475569;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .absent-badge.warning {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+        .absent-badge.success {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .absent-board-content {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+            padding: 4px 2px;
+        }
+
+        /* 缺考座號膠囊標籤 (支援空白隔開、自動流式排列) */
+        .absent-items-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            align-content: flex-start;
+        }
+
+        .absent-pill {
+            background: linear-gradient(135deg, #fff1f2 0%, #fee2e2 100%);
+            border: 2px solid #f87171;
+            color: #991b1b;
+            font-size: 2rem;
+            font-weight: 900;
+            padding: 5px 18px;
+            border-radius: 14px;
+            box-shadow: 0 3px 8px rgba(239, 68, 68, 0.12);
+            font-family: 'Roboto Mono', 'Noto Sans TC', monospace;
+            display: inline-flex;
+            align-items: center;
+            letter-spacing: 1px;
+        }
+
+        .all-present-msg {
+            color: #059669;
+            font-size: 1.85rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 10px;
+        }
+
+        /* --- 5. 視窗最下面區塊：考場大字提醒 / 跑馬燈 --- */
+        .bottom-reminder-bar {
+            flex: 0 0 82px;
+            height: 82px;
+            background: rgba(255, 255, 255, 0.85);
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding: 0 70px;
+            border-radius: 0 0 24px 24px;
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.02);
+            transition: all 0.4s ease;
+        }
+
+        #main-reminder {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--text-primary);
+            text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.8);
+            letter-spacing: 2px;
+            line-height: 1.25;
+            text-align: center;
+            white-space: pre-line;
+        }
+
+        .bottom-reminder-bar.marquee-active #main-reminder {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: bottom-reminder-scroll 22s linear infinite;
+            padding-left: 100%;
+            white-space: nowrap;
+        }
+
+        @keyframes bottom-reminder-scroll {
+            from { transform: translate(0, -50%); }
+            to { transform: translate(-100%, -50%); left: 0; }
+        }
+
+        /* 最後 5 分鐘緊急警戒條 */
+        @keyframes urgent-bar-pulse {
+            0%, 100% {
+                background: rgba(254, 226, 226, 0.9);
+                border-top-color: #f87171;
+            }
+            50% {
+                background: rgba(254, 202, 202, 0.98);
+                border-top-color: #ef4444;
+                box-shadow: 0 -4px 25px rgba(239, 68, 68, 0.35);
+            }
+        }
+        .bottom-reminder-bar.urgent-mode {
+            animation: urgent-bar-pulse 1.8s infinite ease-in-out;
+        }
+        .bottom-reminder-bar.urgent-mode #main-reminder {
+            color: #b91c1c !important;
+            animation: urgent-text-pulse 1s infinite alternate;
+        }
+        @keyframes urgent-text-pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.03); }
         }
 
         /* --- 設定面板 --- */
@@ -542,60 +817,76 @@
 </head>
 <body>
 
-    <div class="container">
-        <!-- 1. 時鐘區 -->
-        <div class="clock-section">
-            <div class="clock-label">臺中市清水區西寧國小</div>
-            <div class="clock-time" id="clock">00:00:00</div>
-        </div>
+    <div class="container break-mode">
+        <!-- 上方主內容區 (左側考程時鐘 + 右側BOSS考勤) -->
+        <div class="main-content">
+            <!-- 左側主面板 (時鐘 + 課表) -->
+            <div class="left-panel">
+                <!-- 1. 時鐘區 -->
+                <div class="clock-section">
+                    <div class="clock-label">臺中市清水區西寧國小</div>
+                    <div class="clock-time" id="clock">00:00:00</div>
+                </div>
 
-        <!-- 2. 主訊息區 -->
-        <div class="message-section">
-            <!-- Boss 血條 -->
-            <div class="boss-battle-area">
-                <div class="boss-avatar anim-float" id="boss-icon" onclick="bossClickReaction()">☕</div>
-                <div class="hp-container">
-                    <div class="hp-text">
-                        <span class="boss-name" id="boss-name">休息中</span>
-                        <span class="boss-timer" id="boss-timer">--:--</span>
+                <!-- 2. 課表區 (考試焦點卡 / 下課全日清單) -->
+                <div class="schedule-section" id="schedule-list">
+                    <!-- JS 自動產生 -->
+                </div>
+            </div>
+
+            <!-- 右側主面板 (Boss + 考勤並列專區) -->
+            <div class="right-panel">
+                <!-- Boss 血條 -->
+                <div class="boss-battle-area">
+                    <div class="boss-avatar anim-float" id="boss-icon" onclick="bossClickReaction()">☕</div>
+                    <div class="hp-container">
+                        <div class="hp-text">
+                            <span class="boss-name" id="boss-name">休息中</span>
+                            <span class="boss-timer" id="boss-timer">--:--</span>
+                        </div>
+                        <div class="hp-bar-frame">
+                            <div class="hp-bar-fill" id="hp-bar" style="width: 100%; background: #ccc;">
+                                <!-- 恐龍跑者：放在填充條內部，透過 CSS 定位在末端 -->
+                                <div class="dino-runner" id="dino-icon">🦖</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="hp-bar-frame">
-                        <div class="hp-bar-fill" id="hp-bar" style="width: 100%; background: #ccc;">
-                            <!-- 恐龍跑者：放在填充條內部，透過 CSS 定位在末端 -->
-                            <div class="dino-runner" id="dino-icon">🦖</div>
+                </div>
+
+                <!-- 考勤統計與缺考資訊專區 (水平平行並列) -->
+                <div class="attendance-section">
+                    <div class="attendance-stats">
+                        <div class="stat-box stat-expected">
+                            <div class="stat-label">應到人數</div>
+                            <div class="stat-value expected" id="display-expected">30</div>
+                        </div>
+                        <div class="stat-box stat-actual">
+                            <div class="stat-label">實到人數</div>
+                            <div class="stat-value actual" id="display-actual">27</div>
+                        </div>
+                        <div class="stat-box stat-absent" id="stat-box-absent">
+                            <div class="stat-label">缺考人數</div>
+                            <div class="stat-value absent zero" id="display-absent-count">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="absent-board">
+                        <div class="absent-board-header">
+                            <span class="absent-board-icon">📋</span>
+                            <span class="absent-board-title">缺考座號與備註</span>
+                            <span class="absent-badge success" id="absent-status-badge">全班到齊</span>
+                        </div>
+                        <div class="absent-board-content" id="display-absent-list">
+                            <!-- JS 自動產生 -->
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- 提醒大字 -->
-            <div class="reminder-area" id="reminder-container">
-                <div id="main-reminder">
-                    準備考試<br>請保持安靜
-                </div>
-            </div>
         </div>
 
-        <!-- 3. 課表區 -->
-        <div class="schedule-section" id="schedule-list">
-            <!-- JS 自動產生 -->
-        </div>
-
-        <!-- 4. 考勤統計區 -->
-        <div class="attendance-section">
-            <div class="stat-box">
-                <div class="stat-label">應到</div>
-                <div class="stat-value expected" id="display-expected">30</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">實到</div>
-                <div class="stat-value actual" id="display-actual">28</div>
-            </div>
-            <div class="stat-box list-box">
-                <div class="absent-list" id="display-absent-list">
-                    缺考座號:原因
-                </div>
-            </div>
+        <!-- 視窗最下面區塊：考場大字提醒 / 跑馬燈 -->
+        <div class="bottom-reminder-bar" id="reminder-container">
+            <div id="main-reminder">準備考試 請保持安靜</div>
         </div>
     </div>
 
@@ -678,9 +969,19 @@
         </div>
         
         <div class="form-group">
-            <label>📋 缺考名單資訊 <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: normal;">(自動計算缺考人數並扣減實到)</span></label>
-            <textarea id="input-absent-list" rows="3" oninput="autoCalculateAttendance()">缺考座號:原因</textarea>
+            <label>📋 缺考名單資訊 <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: normal;">(座號可用空白隔開，無需按 Enter)</span></label>
+            <textarea id="input-absent-list" rows="3" placeholder="例如輸入：11 12 13 (用空白隔開即可，系統自動排版與扣減人數)" oninput="autoCalculateAttendance()">缺考座號:原因</textarea>
             <div id="absent-calc-hint" style="font-size: 0.85rem; color: #0984e3; margin-top: 5px;"></div>
+        </div>
+
+        <div class="form-group settings-highlight" style="background: #ecfdf5; border-color: #a7f3d0; margin-top: 15px;">
+            <label>🧪 即時版面效果模擬 (方便您確認「考試中」與「下課中」版面)</label>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button type="button" class="btn" id="btn-sim-auto" style="flex: 1; padding: 10px 5px; font-size: 0.95rem; background: #0284c7;" onclick="setSimulation('auto')">🔄 系統時間</button>
+                <button type="button" class="btn" id="btn-sim-exam" style="flex: 1; padding: 10px 5px; font-size: 0.95rem; background: #ea580c;" onclick="setSimulation('exam')">📝 模擬考試中</button>
+                <button type="button" class="btn" id="btn-sim-break" style="flex: 1; padding: 10px 5px; font-size: 0.95rem; background: #059669;" onclick="setSimulation('break')">☕ 模擬下課中</button>
+            </div>
+            <div id="sim-hint" style="font-size: 0.85rem; color: #059669; margin-top: 6px; font-weight: 700;">目前狀態：跟隨系統真實時間自動切換</div>
         </div>
         
         <div class="btn-group">
@@ -877,19 +1178,76 @@
             }
         });
 
-        // --- 實務功能：考勤人數智慧自動連動計算 ---
-        function parseAbsentCount(text) {
-            if (!text) return 0;
+        // --- 實務功能：考勤人數智慧自動連動計算與顯示更新 ---
+        function getAbsentItems(text) {
+            if (!text) return [];
             const trimmed = text.trim();
             if (!trimmed || trimmed === '無' || trimmed === '缺考座號:原因' || trimmed === '全勤' || trimmed === '全到') {
-                return 0;
+                return [];
             }
-            // 依換行、逗號、分號、頓號分割各項紀錄
-            const items = trimmed.split(/[\n,;，；、]+/).map(s => s.trim()).filter(s => s.length > 0);
-            const validItems = items.filter(item => {
+            // 依空白、換行、逗號、分號、頓號分割各項紀錄 (空白隔開即可，無需按 Enter)
+            const rawItems = trimmed.split(/[\s,;，；、]+/).map(s => s.trim()).filter(s => s.length > 0);
+            return rawItems.filter(item => {
                 return item !== '無' && item !== '缺考座號:原因' && item !== '全勤' && item !== '全到';
             });
-            return validItems.length;
+        }
+
+        function parseAbsentCount(text) {
+            return getAbsentItems(text).length;
+        }
+
+        function updateAttendanceDisplay(expected, actual, absentText, absentCount) {
+            const dispExpected = document.getElementById('display-expected');
+            const dispActual = document.getElementById('display-actual');
+            const dispCount = document.getElementById('display-absent-count');
+            const dispList = document.getElementById('display-absent-list');
+            const dispBadge = document.getElementById('absent-status-badge');
+
+            if (dispExpected) dispExpected.innerText = expected;
+            if (dispActual) dispActual.innerText = actual;
+
+            if (dispCount) {
+                dispCount.innerText = absentCount;
+                if (absentCount > 0) {
+                    dispCount.className = "stat-value absent";
+                } else {
+                    dispCount.className = "stat-value absent zero";
+                }
+            }
+
+            const statAbsentBox = document.getElementById('stat-box-absent');
+            if (statAbsentBox) {
+                if (absentCount > 0) {
+                    statAbsentBox.classList.remove('zero-absent');
+                } else {
+                    statAbsentBox.classList.add('zero-absent');
+                }
+            }
+
+            if (dispBadge) {
+                if (absentCount > 0) {
+                    dispBadge.innerText = `未到 ${absentCount} 人`;
+                    dispBadge.className = "absent-badge warning";
+                } else {
+                    dispBadge.innerText = "全班到齊";
+                    dispBadge.className = "absent-badge success";
+                }
+            }
+
+            if (dispList) {
+                const items = getAbsentItems(absentText);
+                if (items.length === 0) {
+                    const trimmed = (absentText || '').trim();
+                    if (trimmed === '缺考座號:原因') {
+                        dispList.innerHTML = `<span style="color: #94a3b8; font-weight: normal; font-size: 1.35rem;">尚未設定缺考座號（點擊齒輪設定，座號用空白隔開即可）</span>`;
+                    } else {
+                        dispList.innerHTML = `<div class="all-present-msg">✨ 全班到齊，無缺考人員</div>`;
+                    }
+                } else {
+                    // 自動轉為清晰獨立的膠囊標籤，空白隔開即自動排版
+                    dispList.innerHTML = '<div class="absent-items-wrap">' + items.map(it => `<span class="absent-pill">${it}</span>`).join('') + '</div>';
+                }
+            }
         }
 
         function autoCalculateAttendance() {
@@ -914,6 +1272,37 @@
                     hint.style.color = '#00b894';
                 }
             }
+
+            updateAttendanceDisplay(expected, calculatedActual, absentInput.value, absentCount);
+        }
+
+        // --- 模擬狀態控制 (方便測試預覽) ---
+        let simulationState = 'auto'; // 'auto' | 'exam' | 'break'
+
+        function setSimulation(mode) {
+            simulationState = mode;
+            const hint = document.getElementById('sim-hint');
+            const btnAuto = document.getElementById('btn-sim-auto');
+            const btnExam = document.getElementById('btn-sim-exam');
+            const btnBreak = document.getElementById('btn-sim-break');
+
+            if (btnAuto) btnAuto.style.opacity = mode === 'auto' ? '1' : '0.65';
+            if (btnExam) btnExam.style.opacity = mode === 'exam' ? '1' : '0.65';
+            if (btnBreak) btnBreak.style.opacity = mode === 'break' ? '1' : '0.65';
+
+            if (hint) {
+                if (mode === 'exam') {
+                    hint.innerText = "⚡ 已啟用【模擬考試中】：課表收合為單節焦點，考勤與缺考專區最大化！";
+                    hint.style.color = "#ea580c";
+                } else if (mode === 'break') {
+                    hint.innerText = "☕ 已啟用【模擬下課中】：課表展開為全天時間，並標註下一節預告！";
+                    hint.style.color = "#059669";
+                } else {
+                    hint.innerText = "🔄 目前狀態：跟隨系統真實時間自動切換";
+                    hint.style.color = "#0284c7";
+                }
+            }
+            updateTime();
         }
 
         // --- 資料庫：考程表 ---
@@ -960,7 +1349,15 @@
         let reactionEndTime = 0;
 
         function updateTime() {
-            const now = new Date();
+            let now = new Date();
+            if (simulationState === 'exam') {
+                now = new Date();
+                now.setHours(8, 50, 0); // 模擬第一節考試進行中
+            } else if (simulationState === 'break') {
+                now = new Date();
+                now.setHours(9, 25, 0); // 模擬第一節與第二節之間的休息時間
+            }
+
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
@@ -997,13 +1394,13 @@
                 const row = document.createElement('div');
                 row.className = 'schedule-row';
                 row.id = `schedule-${index}`;
-                // 修改 HTML 結構，加入狀態圖示欄位
                 row.innerHTML = `
-                    <div class="subject-container">
+                    <div class="schedule-badge-area">
                         <span class="status-icon"></span>
-                        <div class="subject-name">${item.subject}</div>
+                        <span class="schedule-tag" id="schedule-tag-${index}"></span>
                     </div>
-                    <div class="subject-time">${item.start}~${item.end}</div>
+                    <div class="subject-name">${item.subject}</div>
+                    <div class="subject-time">${item.start} ~ ${item.end}</div>
                 `;
                 container.appendChild(row);
             });
@@ -1011,37 +1408,68 @@
 
         function updateScheduleAndBoss(nowDate) {
             const currentTotalMin = nowDate.getHours() * 60 + nowDate.getMinutes();
+            const container = document.querySelector('.container');
             
             let isExamining = false;
             let activeSubject = null;
+            let activeIndex = -1;
+            let nextIndex = -1;
 
             currentSchedule.forEach((item, index) => {
-                const row = document.getElementById(`schedule-${index}`);
-                if(!row) return;
-                
-                const iconSpan = row.querySelector('.status-icon');
+                const [sH, sM] = item.start.split(':').map(Number);
+                const [eH, eM] = item.end.split(':').map(Number);
+                const startMin = sH * 60 + sM;
+                const endMin = eH * 60 + eM;
 
-                // 重置所有狀態
-                row.classList.remove('active');
-                row.classList.remove('finished');
-                iconSpan.innerText = '';
+                if (currentTotalMin >= startMin && currentTotalMin < endMin) {
+                    isExamining = true;
+                    activeSubject = item;
+                    activeIndex = index;
+                } else if (startMin > currentTotalMin && nextIndex === -1) {
+                    nextIndex = index;
+                }
+            });
+
+            // 動態切換容器樣式：考試焦點模式 vs 下課全日清單模式
+            if (container) {
+                if (isExamining) {
+                    container.classList.add('exam-mode');
+                    container.classList.remove('break-mode');
+                } else {
+                    container.classList.add('break-mode');
+                    container.classList.remove('exam-mode');
+                }
+            }
+
+            // 更新課表各列
+            currentSchedule.forEach((item, index) => {
+                const row = document.getElementById(`schedule-${index}`);
+                if (!row) return;
+
+                const iconSpan = row.querySelector('.status-icon');
+                const tagSpan = document.getElementById(`schedule-tag-${index}`);
+
+                row.classList.remove('active', 'finished', 'next-up');
+                if (iconSpan) iconSpan.innerText = '';
+                if (tagSpan) {
+                    tagSpan.innerText = '';
+                    tagSpan.style.display = 'none';
+                }
 
                 const [sH, sM] = item.start.split(':').map(Number);
                 const [eH, eM] = item.end.split(':').map(Number);
                 const startMin = sH * 60 + sM;
                 const endMin = eH * 60 + eM;
 
-                // 判斷邏輯
-                if (currentTotalMin >= endMin) {
-                    // 已考完
-                    row.classList.add('finished');
-                    iconSpan.innerText = '✔';
-                } else if (currentTotalMin >= startMin && currentTotalMin < endMin) {
-                    // 考試中
-                    isExamining = true;
-                    activeSubject = item;
+                if (index === activeIndex) {
+                    // 當節考試中
                     row.classList.add('active');
-                    
+                    if (iconSpan) iconSpan.innerText = '⚡';
+                    if (tagSpan) {
+                        tagSpan.innerText = '📝 當節考試';
+                        tagSpan.style.display = 'inline-block';
+                    }
+
                     // Boss 血條計算
                     const startTime = new Date(nowDate); startTime.setHours(sH, sM, 0);
                     const endTime = new Date(nowDate); endTime.setHours(eH, eM, 0);
@@ -1074,8 +1502,18 @@
                     }
 
                     updateBossUI(item.subject, percentage, remaining);
-                } else {
-                    // 未開始 (預設狀態，不做額外處理)
+                } else if (currentTotalMin >= endMin) {
+                    // 已考完
+                    row.classList.add('finished');
+                    if (iconSpan) iconSpan.innerText = '✔';
+                } else if (!isExamining && index === nextIndex) {
+                    // 下課中：標註下一節即將開始
+                    row.classList.add('next-up');
+                    if (iconSpan) iconSpan.innerText = '👉';
+                    if (tagSpan) {
+                        tagSpan.innerText = '⏰ 下節預備';
+                        tagSpan.style.display = 'inline-block';
+                    }
                 }
             });
 
@@ -1110,8 +1548,13 @@
 
                 document.getElementById('boss-icon').innerText = "☕"; 
                 document.getElementById('boss-icon').className = "boss-avatar anim-float";
-                document.getElementById('boss-name').innerText = "休息時間 / 準備下一科";
-                document.getElementById('boss-timer').innerText = "";
+                if (nextIndex !== -1) {
+                    const nextSub = currentSchedule[nextIndex];
+                    document.getElementById('boss-name').innerText = `下節預備：${nextSub.subject} (${nextSub.start})`;
+                } else {
+                    document.getElementById('boss-name').innerText = "今日考試已全部結束";
+                }
+                document.getElementById('boss-timer').innerText = "休息時間";
                 const bar = document.getElementById('hp-bar');
                 bar.style.width = "100%";
                 bar.style.background = "#b2bec3"; 
@@ -1232,6 +1675,9 @@
             localStorage.setItem('exam_board_actual', actual);
             localStorage.setItem('exam_board_absent_list', absentList);
 
+            autoCalculateAttendance();
+            updateTime();
+
             closeSettings();
         }
 
@@ -1297,6 +1743,11 @@
         window.onload = function() {
             loadSavedSettings(); 
             renderSchedule(); 
+            const urlParams = new URLSearchParams(window.location.search);
+            const simParam = urlParams.get('sim');
+            if (simParam === 'exam' || simParam === 'break') {
+                setSimulation(simParam);
+            }
             setInterval(updateTime, 1000);
             updateTime();
         };
