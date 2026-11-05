@@ -824,7 +824,7 @@
             <div class="left-panel">
                 <!-- 1. 時鐘區 -->
                 <div class="clock-section">
-                    <div class="clock-label">臺中市清水區西寧國小</div>
+                    <div class="clock-label" id="clock-school-label">臺中市清水區西寧國小</div>
                     <div class="clock-time" id="clock">00:00:00</div>
                 </div>
 
@@ -898,7 +898,57 @@
     <div id="settings-panel">
         <h2>🔧 看板設定</h2>
         
-        <div class="form-group settings-highlight">
+                <div class="form-group settings-highlight" style="background: #e0f2fe; border-color: #7dd3fc;">
+            <label>🏫 選擇班級 (自動帶入全班人數與考程)</label>
+            <select id="select-class" onchange="onClassSelectChange()" style="font-size: 1.05rem; font-weight: 700; color: #0369a1;">
+                <option value="custom">-- 自訂班級 / 手動輸入人數 --</option>
+                <optgroup label="一年級 (低年級考程)">
+                    <option value="101" data-count="23" data-grade="low" data-boy="11" data-girl="12">一年一班 (23人，男11 女12)</option>
+                    <option value="102" data-count="25" data-grade="low" data-boy="13" data-girl="12">一年二班 (25人，男13 女12)</option>
+                    <option value="103" data-count="23" data-grade="low" data-boy="10" data-girl="13">一年三班 (23人，男10 女13)</option>
+                    <option value="104" data-count="24" data-grade="low" data-boy="11" data-girl="13">一年四班 (24人，男11 女13)</option>
+                </optgroup>
+                <optgroup label="二年級 (低年級考程)">
+                    <option value="201" data-count="25" data-grade="low" data-boy="15" data-girl="10">二年一班 (25人，男15 女10)</option>
+                    <option value="202" data-count="26" data-grade="low" data-boy="15" data-girl="11">二年二班 (26人，男15 女11)</option>
+                    <option value="203" data-count="24" data-grade="low" data-boy="14" data-girl="10">二年三班 (24人，男14 女10)</option>
+                    <option value="204" data-count="26" data-grade="low" data-boy="16" data-girl="10">二年四班 (26人，男16 女10)</option>
+                </optgroup>
+                <optgroup label="三年級 (中年級考程)">
+                    <option value="301" data-count="25" data-grade="middle" data-boy="15" data-girl="10">三年一班 (25人，男15 女10)</option>
+                    <option value="302" data-count="25" data-grade="middle" data-boy="16" data-girl="9">三年二班 (25人，男16 女9)</option>
+                    <option value="303" data-count="24" data-grade="middle" data-boy="15" data-girl="9">三年三班 (24人，男15 女9)</option>
+                    <option value="304" data-count="25" data-grade="middle" data-boy="15" data-girl="10">三年四班 (25人，男15 女10)</option>
+                    <option value="305" data-count="24" data-grade="middle" data-boy="15" data-girl="9">三年五班 (24人，男15 女9)</option>
+                </optgroup>
+                <optgroup label="四年級 (中年級考程)">
+                    <option value="401" data-count="27" data-grade="middle" data-boy="17" data-girl="10">四年一班 (27人，男17 女10)</option>
+                    <option value="402" data-count="26" data-grade="middle" data-boy="14" data-girl="12">四年二班 (26人，男14 女12)</option>
+                    <option value="403" data-count="26" data-grade="middle" data-boy="16" data-girl="10">四年三班 (26人，男16 女10)</option>
+                    <option value="404" data-count="26" data-grade="middle" data-boy="14" data-girl="12">四年四班 (26人，男14 女12)</option>
+                    <option value="405" data-count="24" data-grade="middle" data-boy="12" data-girl="12">四年五班 (24人，男12 女12)</option>
+                </optgroup>
+                <optgroup label="五年級 (高年級考程)">
+                    <option value="501" data-count="28" data-grade="high" data-boy="14" data-girl="14">五年一班 (28人，男14 女14)</option>
+                    <option value="502" data-count="27" data-grade="high" data-boy="13" data-girl="14">五年二班 (27人，男13 女14)</option>
+                    <option value="503" data-count="28" data-grade="high" data-boy="14" data-girl="14">五年三班 (28人，男14 女14)</option>
+                    <option value="504" data-count="27" data-grade="high" data-boy="13" data-girl="14">五年四班 (27人，男13 女14)</option>
+                    <option value="505" data-count="28" data-grade="high" data-boy="14" data-girl="14">五年五班 (28人，男14 女14)</option>
+                </optgroup>
+                <optgroup label="六年級 (高年級考程)">
+                    <option value="601" data-count="24" data-grade="high" data-boy="13" data-girl="11">六年一班 (24人，男13 女11)</option>
+                    <option value="602" data-count="24" data-grade="high" data-boy="13" data-girl="11">六年二班 (24人，男13 女11)</option>
+                    <option value="603" data-count="25" data-grade="high" data-boy="13" data-girl="12">六年三班 (25人，男13 女12)</option>
+                    <option value="604" data-count="23" data-grade="high" data-boy="13" data-girl="10">六年四班 (23人，男13 女10)</option>
+                    <option value="605" data-count="25" data-grade="high" data-boy="13" data-girl="12">六年五班 (25人，男13 女12)</option>
+                </optgroup>
+            </select>
+            <div id="class-select-hint" style="font-size: 0.85rem; color: #0284c7; margin-top: 6px; font-weight: 700;">
+                💡 選擇班級後，系統將自動填入應到人數並切換考程
+            </div>
+        </div>
+
+<div class="form-group settings-highlight">
             <label>📅 選擇考程 (自動載入)</label>
             <div style="display: flex; gap: 15px;">
                 <select id="select-grade">
@@ -1621,6 +1671,55 @@
 
         // --- 設定面板功能 ---
         
+                // --- 班級人數自動帶入功能 (西寧國小 115學年度第1學期統計) ---
+        function onClassSelectChange() {
+            const classSelect = document.getElementById('select-class');
+            if (!classSelect) return;
+            const selectedOption = classSelect.options[classSelect.selectedIndex];
+            const hint = document.getElementById('class-select-hint');
+            const schoolLabel = document.getElementById('clock-school-label');
+
+            if (classSelect.value === 'custom') {
+                if (hint) hint.innerText = "💡 自訂模式：請手動輸入應到人數與選擇考程";
+                if (schoolLabel) schoolLabel.innerText = "臺中市清水區西寧國小";
+                return;
+            }
+
+            const count = selectedOption.getAttribute('data-count');
+            const grade = selectedOption.getAttribute('data-grade');
+            const boy = selectedOption.getAttribute('data-boy');
+            const girl = selectedOption.getAttribute('data-girl');
+            const className = selectedOption.text.split(' ')[0];
+
+            // 1. 自動填入應到人數
+            const expectedInput = document.getElementById('input-expected');
+            if (expectedInput && count) {
+                expectedInput.value = count;
+            }
+
+            // 2. 自動切換對應年級考程
+            const gradeSelect = document.getElementById('select-grade');
+            if (gradeSelect && grade) {
+                gradeSelect.value = grade;
+                const selectedDay = document.getElementById('select-day').value;
+                currentSchedule = allSchedules[grade][selectedDay];
+                renderSchedule();
+            }
+
+            // 3. 看板標題加上班級名稱
+            if (schoolLabel) {
+                schoolLabel.innerText = `臺中市清水區西寧國小 ${className}`;
+            }
+
+            // 4. 即時連動更新實到人數與版面
+            autoCalculateAttendance();
+
+            // 5. 提示標籤
+            if (hint) {
+                hint.innerHTML = `✅ 已自動帶入<b>【${className}】</b>全班人數 <b>${count}</b> 人（男生 ${boy}、女生 ${girl}）`;
+            }
+        }
+
         function openSettings() { document.getElementById('settings-panel').style.display = 'block'; }
         function closeSettings() { document.getElementById('settings-panel').style.display = 'none'; }
 
@@ -1667,6 +1766,8 @@
             const alert5Min = document.getElementById('input-alert-5min').checked;
             localStorage.setItem('exam_board_alert_5min', alert5Min);
 
+            const selectedClass = document.getElementById('select-class').value;
+            localStorage.setItem('exam_board_class', selectedClass);
             localStorage.setItem('exam_board_grade', selectedGrade);
             localStorage.setItem('exam_board_day', selectedDay);
             localStorage.setItem('exam_board_reminder', reminderText);
@@ -1682,6 +1783,28 @@
         }
 
         function loadSavedSettings() {
+            const savedClass = localStorage.getItem('exam_board_class') || 'custom';
+            const classSelect = document.getElementById('select-class');
+            if (classSelect) {
+                classSelect.value = savedClass;
+                if (savedClass !== 'custom') {
+                    const selectedOption = classSelect.options[classSelect.selectedIndex];
+                    if (selectedOption) {
+                        const className = selectedOption.text.split(' ')[0];
+                        const count = selectedOption.getAttribute('data-count');
+                        const boy = selectedOption.getAttribute('data-boy');
+                        const girl = selectedOption.getAttribute('data-girl');
+                        const schoolLabel = document.getElementById('clock-school-label');
+                        const hint = document.getElementById('class-select-hint');
+                        if (schoolLabel) {
+                            schoolLabel.innerText = `臺中市清水區西寧國小 ${className}`;
+                        }
+                        if (hint && count) {
+                            hint.innerHTML = `✅ 目前班級：<b>【${className}】</b>全班 <b>${count}</b> 人（男生 ${boy}、女生 ${girl}）`;
+                        }
+                    }
+                }
+
             const savedGrade = localStorage.getItem('exam_board_grade') || 'high';
             const savedDay = localStorage.getItem('exam_board_day') || 'day1';
             
