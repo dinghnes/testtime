@@ -1434,6 +1434,346 @@
             opacity: 0.85;
         }
 
+
+        /* =========================================================
+           👆 快速登記缺考面板 (Quick Absent Picker Modal)
+           ========================================================= */
+        .absent-board {
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        }
+        .absent-board:hover {
+            border-color: #93c5fd;
+            box-shadow: 0 10px 26px rgba(37, 99, 235, 0.1);
+            transform: translateY(-2px);
+        }
+        .absent-board-badges {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .absent-quick-trigger-hint {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: #2563eb;
+            background: #eff6ff;
+            border: 1.5px solid #bfdbfe;
+            padding: 4px 12px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s ease;
+        }
+        .absent-board:hover .absent-quick-trigger-hint {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #1d4ed8;
+        }
+
+        /* 雙層膠囊：座號 + 假別/學習中心標籤 */
+        .absent-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .absent-pill .pill-reason {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #ffffff;
+            background: #e11d48;
+            padding: 3px 10px;
+            border-radius: 9px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 4px rgba(225, 29, 72, 0.25);
+        }
+        .absent-pill .pill-reason.reason-study {
+            background: #0284c7;
+            box-shadow: 0 2px 4px rgba(2, 132, 199, 0.25);
+        }
+
+        /* 彈出視窗遮罩 */
+        .quick-absent-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .quick-absent-overlay.open {
+            display: flex;
+            animation: fadeInModal 0.18s ease-out;
+        }
+        @keyframes fadeInModal {
+            from { opacity: 0; transform: scale(0.97); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .quick-absent-dialog {
+            background: #ffffff;
+            width: 100%;
+            max-width: 760px;
+            max-height: 90vh;
+            border-radius: 26px;
+            box-shadow: 0 25px 60px rgba(15, 23, 42, 0.28);
+            border: 2px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .quick-absent-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px;
+            background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+            border-bottom: 1.5px solid #e2e8f0;
+        }
+        .quick-absent-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .quick-absent-title {
+            font-size: 1.45rem;
+            font-weight: 900;
+            color: #0f172a;
+        }
+        .quick-absent-subtitle {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1d4ed8;
+            background: #dbeafe;
+            padding: 4px 12px;
+            border-radius: 999px;
+        }
+        .quick-absent-close {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1.5px solid #cbd5e1;
+            background: #ffffff;
+            color: #475569;
+            font-size: 1.2rem;
+            font-weight: 900;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .quick-absent-close:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .quick-absent-body {
+            padding: 20px 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .quick-step-label {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #334155;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .quick-step-hint {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #64748b;
+        }
+
+        /* 座號九宮格 (每列 6 個) */
+        .seat-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+        }
+        .seat-btn {
+            height: 54px;
+            border-radius: 14px;
+            border: 2px solid #cbd5e1;
+            background: #f8fafc;
+            color: #1e293b;
+            font-size: 1.4rem;
+            font-weight: 900;
+            font-family: 'JetBrains Mono', 'Noto Sans TC', monospace;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.12s ease;
+            user-select: none;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(15, 23, 42, 0.04);
+        }
+        .seat-btn:hover {
+            border-color: #94a3b8;
+            background: #f1f5f9;
+            transform: translateY(-1px);
+        }
+        .seat-btn.selected {
+            background: linear-gradient(135deg, #ef4444 0%, #e11d48 100%);
+            border-color: #be123c;
+            color: #ffffff;
+            box-shadow: 0 6px 14px rgba(225, 29, 72, 0.28);
+        }
+        .seat-btn .seat-mini-tag {
+            font-size: 0.68rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-top: 2px;
+            opacity: 0.95;
+        }
+
+        /* 已選座號之假別/去向選填區 */
+        .selected-absent-panel {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 14px 16px;
+        }
+        .selected-empty-msg {
+            text-align: center;
+            color: #059669;
+            font-weight: 800;
+            font-size: 1.05rem;
+            padding: 8px 0;
+        }
+        .selected-seat-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .selected-seat-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #ffffff;
+            border: 1.5px solid #fecdd3;
+            border-radius: 12px;
+            padding: 8px 12px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .selected-seat-badge {
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: #be123c;
+            background: #ffe4e6;
+            padding: 4px 12px;
+            border-radius: 8px;
+            min-width: 72px;
+            text-align: center;
+        }
+        .reason-chips-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+        .reason-chip {
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1.5px solid #cbd5e1;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 0.92rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.12s ease;
+        }
+        .reason-chip:hover {
+            border-color: #94a3b8;
+            background: #f1f5f9;
+        }
+        .reason-chip.active {
+            background: #e11d48;
+            border-color: #be123c;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(225, 29, 72, 0.25);
+        }
+        .reason-chip.active[data-reason="學習中心"] {
+            background: #0284c7;
+            border-color: #0369a1;
+            box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+        }
+        .reason-chip.active[data-reason=""] {
+            background: #334155;
+            border-color: #1e293b;
+            box-shadow: none;
+        }
+        .seat-remove-btn {
+            padding: 5px 10px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #64748b;
+            font-size: 0.85rem;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .seat-remove-btn:hover {
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #fca5a5;
+        }
+
+        .quick-absent-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 24px;
+            background: #f8fafc;
+            border-top: 1.5px solid #e2e8f0;
+        }
+        .btn-clear-all-absent {
+            padding: 10px 18px;
+            border-radius: 12px;
+            border: 1.5px solid #10b981;
+            background: #ecfdf5;
+            color: #047857;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-clear-all-absent:hover {
+            background: #10b981;
+            color: #ffffff;
+        }
+        .btn-done-absent {
+            padding: 10px 28px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #ffffff;
+            font-size: 1.08rem;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+            transition: all 0.15s;
+        }
+        .btn-done-absent:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+        }
+
     </style>
 </head>
 <body>
@@ -1534,13 +1874,16 @@
                         </div>
                     </div>
                     
-                    <div class="absent-board">
+                    <div class="absent-board" onclick="openQuickAbsentModal()" title="點擊直接點選缺考座號與假別">
                         <div class="absent-board-header">
                             <div class="absent-board-title-group">
                                 <span class="absent-board-icon">📋</span>
                                 <span class="absent-board-title">缺考座號與備註</span>
                             </div>
-                            <span class="absent-badge success" id="absent-status-badge">全班到齊</span>
+                            <div class="absent-board-badges">
+                                <span class="absent-quick-trigger-hint">👆 點選座號</span>
+                                <span class="absent-badge success" id="absent-status-badge">全班到齊</span>
+                            </div>
                         </div>
                         <div class="absent-board-content" id="display-absent-list">
                             <!-- JS 自動產生 -->
@@ -1560,6 +1903,44 @@
     <!-- 懸浮控制按鈕 -->
     <button id="fullscreen-btn" onclick="toggleFullscreen()" title="切換全螢幕 (快捷鍵 F)">🖥️</button>
     <button id="config-btn" onclick="openSettings()" title="看板設定">⚙️</button>
+
+    <!-- 👆 快速登記缺考座號彈出面板 -->
+    <div class="quick-absent-overlay" id="quick-absent-modal" onclick="onQuickAbsentOverlayClick(event)">
+        <div class="quick-absent-dialog" onclick="event.stopPropagation()">
+            <div class="quick-absent-header">
+                <div class="quick-absent-title-wrap">
+                    <span style="font-size: 1.6rem;">📋</span>
+                    <span class="quick-absent-title">快速登記缺考座號</span>
+                    <span class="quick-absent-subtitle" id="quick-absent-class-info">六年二班 · 應到 24 人</span>
+                </div>
+                <button class="quick-absent-close" onclick="closeQuickAbsentModal()" title="關閉">✕</button>
+            </div>
+            <div class="quick-absent-body">
+                <div>
+                    <div class="quick-step-label">
+                        <span>1️⃣ 點擊座號（點一下登記缺考，再點一下取消）</span>
+                        <span class="quick-step-hint">💡 只點座號即可一秒完成，不需打字</span>
+                    </div>
+                    <div class="seat-grid" id="quick-seat-grid">
+                        <!-- JS 動態產生 1 ~ N 號按鈕 -->
+                    </div>
+                </div>
+                <div>
+                    <div class="quick-step-label">
+                        <span>2️⃣ 選填假別／去向（可不選，預設僅顯示座號）</span>
+                        <span class="quick-step-hint">支援：事假 / 病假 / 公假 / 學習中心</span>
+                    </div>
+                    <div class="selected-absent-panel" id="quick-selected-panel">
+                        <!-- JS 動態產生已選座號之假別按鈕列 -->
+                    </div>
+                </div>
+            </div>
+            <div class="quick-absent-footer">
+                <button class="btn-clear-all-absent" onclick="clearAllQuickAbsent()">✨ 全班到齊（全部清除）</button>
+                <button class="btn-done-absent" onclick="closeQuickAbsentModal()">✅ 完成</button>
+            </div>
+        </div>
+    </div>
 
     <!-- 設定面板 -->
     <div id="settings-panel">
@@ -1978,14 +2359,185 @@
                         <div class="all-present-card">
                             <div class="all-present-icon">🌟</div>
                             <div class="all-present-title">全班到齊 · 無缺考人員</div>
-                            <div class="all-present-sub">如需登記缺考，請點擊右下角 ⚙️ 設定（座號以空白隔開即可）</div>
+                            <div class="all-present-sub">👆 直接點擊此區塊，即可一秒點選缺考座號與假別</div>
                         </div>
                     `;
                 } else {
-                    // 自動轉為清晰獨立的膠囊標籤，空白隔開即自動排版
-                    dispList.innerHTML = '<div class="absent-items-wrap">' + items.map(it => `<span class="absent-pill">${it}</span>`).join('') + '</div>';
+                    // 自動轉為清晰獨立的膠囊標籤，支援 11(學習中心) 或純座號 11
+                    const pillsHtml = items.map(it => {
+                        const m = it.match(/^(\d+)(?:\(([^)]+)\)|:(.+))$/);
+                        if (m) {
+                            const seat = m[1];
+                            const reason = m[2] || m[3];
+                            const extraClass = reason === '學習中心' ? 'reason-study' : '';
+                            return `<span class="absent-pill"><span class="pill-seat">${seat}</span><span class="pill-reason ${extraClass}">${reason}</span></span>`;
+                        }
+                        return `<span class="absent-pill">${it}</span>`;
+                    }).join('');
+                    dispList.innerHTML = '<div class="absent-items-wrap">' + pillsHtml + '</div>';
                 }
             }
+        }
+
+
+        // =========================================================
+        // 👆 快速登記缺考面板邏輯 (座號點選 + 事假/病假/公假/學習中心)
+        // =========================================================
+        let quickAbsentMap = new Map(); // key: seatNumber (int), value: reason (string, '' | '事假' | '病假' | '公假' | '學習中心')
+        let quickCustomTokens = [];     // 保留非純數字座號之自訂文字
+
+        function parseAbsentListToMap(rawText) {
+            quickAbsentMap.clear();
+            quickCustomTokens = [];
+            const items = getAbsentItems(rawText);
+            items.forEach(token => {
+                const m = token.match(/^(\d+)(?:\(([^)]+)\)|:(.+))?$/);
+                if (m) {
+                    const seatNum = parseInt(m[1], 10);
+                    const reason = (m[2] || m[3] || '').trim();
+                    quickAbsentMap.set(seatNum, reason);
+                } else {
+                    quickCustomTokens.push(token);
+                }
+            });
+        }
+
+        function syncMapToAbsentInput() {
+            const sortedSeats = Array.from(quickAbsentMap.keys()).sort((a, b) => a - b);
+            const seatTokens = sortedSeats.map(seat => {
+                const reason = quickAbsentMap.get(seat);
+                return reason ? `${seat}(${reason})` : `${seat}`;
+            });
+            const combined = [...seatTokens, ...quickCustomTokens].join(' ');
+            const absentInput = document.getElementById('input-absent-list');
+            if (absentInput) {
+                absentInput.value = combined;
+            }
+            autoCalculateAttendance();
+            localStorage.setItem('exam_board_absent_list', combined);
+            const actualInput = document.getElementById('input-actual');
+            if (actualInput) {
+                localStorage.setItem('exam_board_actual', actualInput.value);
+            }
+        }
+
+        function openQuickAbsentModal() {
+            const modal = document.getElementById('quick-absent-modal');
+            const absentInput = document.getElementById('input-absent-list');
+            const expectedInput = document.getElementById('input-expected');
+            const classInfo = document.getElementById('quick-absent-class-info');
+            if (!modal) return;
+
+            const totalSeats = Math.min(50, Math.max(1, parseInt(expectedInput?.value, 10) || 24));
+            if (classInfo) {
+                classInfo.innerText = `${currentClassName || '本班'} · 應到 ${totalSeats} 人`;
+            }
+
+            parseAbsentListToMap(absentInput ? absentInput.value : '');
+            renderQuickSeatGrid(totalSeats);
+            renderQuickSelectedPanel();
+            modal.classList.add('open');
+        }
+
+        function closeQuickAbsentModal() {
+            const modal = document.getElementById('quick-absent-modal');
+            if (modal) modal.classList.remove('open');
+        }
+
+        function onQuickAbsentOverlayClick(e) {
+            if (e.target && e.target.id === 'quick-absent-modal') {
+                closeQuickAbsentModal();
+            }
+        }
+
+        function renderQuickSeatGrid(totalSeats) {
+            const grid = document.getElementById('quick-seat-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            for (let i = 1; i <= totalSeats; i++) {
+                const isAbsent = quickAbsentMap.has(i);
+                const reason = quickAbsentMap.get(i) || '';
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'seat-btn' + (isAbsent ? ' selected' : '');
+                btn.innerHTML = `<span>${i}</span>` + (isAbsent && reason ? `<span class="seat-mini-tag">${reason}</span>` : '');
+                btn.onclick = () => toggleQuickSeat(i, totalSeats);
+                grid.appendChild(btn);
+            }
+        }
+
+        function renderQuickSelectedPanel() {
+            const panel = document.getElementById('quick-selected-panel');
+            if (!panel) return;
+
+            const sortedSeats = Array.from(quickAbsentMap.keys()).sort((a, b) => a - b);
+            if (sortedSeats.length === 0) {
+                panel.innerHTML = '<div class="selected-empty-msg">🌟 目前全班到齊（點擊上方座號即可一秒登記缺考）</div>';
+                return;
+            }
+
+            const reasons = ['', '事假', '病假', '公假', '學習中心'];
+            const rowsHtml = sortedSeats.map(seat => {
+                const currentReason = quickAbsentMap.get(seat) || '';
+                const chipsHtml = reasons.map(r => {
+                    const label = r === '' ? '僅座號' : r;
+                    const activeClass = currentReason === r ? 'active' : '';
+                    return `<button type="button" class="reason-chip ${activeClass}" data-reason="${r}" onclick="setQuickSeatReason(${seat}, '${r}')">${label}</button>`;
+                }).join('');
+
+                return `
+                    <div class="selected-seat-row">
+                        <span class="selected-seat-badge">${seat} 號</span>
+                        <div class="reason-chips-group">
+                            ${chipsHtml}
+                        </div>
+                        <button type="button" class="seat-remove-btn" onclick="removeQuickSeat(${seat})" title="取消此座號缺考">✕ 取消</button>
+                    </div>
+                `;
+            }).join('');
+
+            panel.innerHTML = `<div class="selected-seat-list">${rowsHtml}</div>`;
+        }
+
+        function toggleQuickSeat(seatNum, totalSeats) {
+            if (quickAbsentMap.has(seatNum)) {
+                quickAbsentMap.delete(seatNum);
+            } else {
+                quickAbsentMap.set(seatNum, '');
+            }
+            syncMapToAbsentInput();
+            renderQuickSeatGrid(totalSeats);
+            renderQuickSelectedPanel();
+        }
+
+        function setQuickSeatReason(seatNum, reason) {
+            if (!quickAbsentMap.has(seatNum)) return;
+            quickAbsentMap.set(seatNum, reason);
+            const expectedInput = document.getElementById('input-expected');
+            const totalSeats = Math.min(50, Math.max(1, parseInt(expectedInput?.value, 10) || 24));
+            syncMapToAbsentInput();
+            renderQuickSeatGrid(totalSeats);
+            renderQuickSelectedPanel();
+        }
+
+        function removeQuickSeat(seatNum) {
+            quickAbsentMap.delete(seatNum);
+            const expectedInput = document.getElementById('input-expected');
+            const totalSeats = Math.min(50, Math.max(1, parseInt(expectedInput?.value, 10) || 24));
+            syncMapToAbsentInput();
+            renderQuickSeatGrid(totalSeats);
+            renderQuickSelectedPanel();
+        }
+
+        function clearAllQuickAbsent() {
+            quickAbsentMap.clear();
+            quickCustomTokens = [];
+            const expectedInput = document.getElementById('input-expected');
+            const totalSeats = Math.min(50, Math.max(1, parseInt(expectedInput?.value, 10) || 24));
+            syncMapToAbsentInput();
+            renderQuickSeatGrid(totalSeats);
+            renderQuickSelectedPanel();
         }
 
         function autoCalculateAttendance() {
